@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a211d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="基礎ノート">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>ポケット基礎ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* Layout: one narrow column like a phone notebook; the bottom bar is Excel's sheet tabs, lessons show real cell grids. */
+:root {
+  --bg: #f5f8f5; --paper: #ffffff; --fg: #18211c; --muted: #5b6a61; --line: #d3ddd6; --soft: #e9efea;
+  --accent: #17734a; --accent-fg: #ffffff; --accent-soft: #dcefe4;
+  --answer: #fff2cc; --answer-line: #e3cf8a; --good: #17734a; --bad: #b3261e; --bad-soft: #fbe3e1;
+  --f0: #f3c6c6; --f1: #f5dcb5; --f2: #f1ecb0; --f3: #c9e8c3; --f4: #dcdcdc; --f5: #bfe3ea; --f6: #c9d3f2; --f7: #e0cdf0; --f8: #f2c9e2;
+  --display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --body: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --mono: "BIZ UDGothic", "Consolas", "Menlo", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111613; --paper: #1a211d; --fg: #e3ebe6; --muted: #9aaba1; --line: #2e3a33; --soft: #222b26;
+  --accent: #4cc38a; --accent-fg: #0d1a13; --accent-soft: #1d3a2b;
+  --answer: #4a4122; --answer-line: #6e6232; --good: #4cc38a; --bad: #f2867d; --bad-soft: #3d2120;
+  --f0: #6b3a3a; --f1: #6b5233; --f2: #5f5a2a; --f3: #345b33; --f4: #444; --f5: #2d5660; --f6: #354470; --f7: #533d6b; --f8: #6b3a59;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #111613; --paper: #1a211d; --fg: #e3ebe6; --muted: #9aaba1; --line: #2e3a33; --soft: #222b26;
+  --accent: #4cc38a; --accent-fg: #0d1a13; --accent-soft: #1d3a2b;
+  --answer: #4a4122; --answer-line: #6e6232; --good: #4cc38a; --bad: #f2867d; --bad-soft: #3d2120;
+  --f0: #6b3a3a; --f1: #6b5233; --f2: #5f5a2a; --f3: #345b33; --f4: #444; --f5: #2d5660; --f6: #354470; --f7: #533d6b; --f8: #6b3a59;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 16px; line-height: 1.75; -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 calc(84px + env(safe-area-inset-bottom, 0px)); }
+header.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--line); }
+header.bar .in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; min-height: 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.namebox { font-family: var(--mono); font-size: 13px; border: 1px solid var(--line); padding: 1px 8px; color: var(--muted); background: var(--bg); min-width: 52px; text-align: center; }
+.fx { font-family: var(--mono); color: var(--muted); font-style: italic; font-size: 14px; }
+.crumb { font-size: 14px; color: var(--fg); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.4; margin: 0; }
+h1 { font-size: 26px; font-weight: 900; }
+h2 { font-size: 21px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+section.page { display: flex; flex-direction: column; gap: 18px; padding-top: 20px; }
+.lead { color: var(--muted); font-size: 15px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--accent); }
+button, a.btn { font: inherit; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--fg); text-decoration: none; font-size: 15px; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+.btn:focus-visible, .row:focus-visible, .choice:focus-visible, .tab:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.btns .btn { flex: 1 1 140px; }
+/* list rows */
+.list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.row { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--fg); text-align: left; text-decoration: none; width: 100%; }
+.row:first-child { border-top: 0; }
+.row .no { font-family: var(--mono); font-size: 13px; color: var(--muted); text-align: center; border: 1px solid var(--line); background: var(--bg); padding: 2px 0; }
+.row .t { min-width: 0; }
+.row .t b { display: block; font-weight: 700; font-size: 15px; }
+.row .t span { display: block; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.row .mark { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.row.done .no { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.meter { height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+/* home tiles */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--fg); text-decoration: none; text-align: left; min-width: 0; }
+.tile b { font-family: var(--display); font-size: 16px; }
+.tile span { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.tile .addr { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.next { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 8px; background: var(--answer); border: 1px solid var(--answer-line); }
+/* lesson blocks */
+.lesson { display: flex; flex-direction: column; gap: 14px; }
+.lesson p { font-size: 16px; }
+.tip { font-size: 15px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+.tip::before { content: "コツ　"; font-weight: 700; color: var(--accent); }
+.ex { display: grid; grid-template-columns: minmax(0, auto) 1fr; gap: 4px 12px; align-items: baseline; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 6px; background: var(--paper); }
+.ex code { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--accent); word-break: break-all; }
+.ex span { font-size: 14px; color: var(--muted); }
+@media (max-width: 420px) { .ex { grid-template-columns: 1fr; } }
+.sheet { display: flex; flex-direction: column; gap: 8px; }
+.grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); background: var(--paper); }
+table.cells { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+table.cells th { background: var(--soft); color: var(--muted); font-weight: 400; font-family: var(--mono); font-size: 12px; padding: 2px 6px; border: 1px solid var(--line); }
+table.cells td { border: 1px solid var(--line); padding: 4px 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.cells td.num { text-align: right; }
+table.cells td.f { font-family: var(--mono); color: var(--accent); background: var(--answer); }
+.note { font-size: 14px; color: var(--muted); }
+.hint-box { display: flex; flex-direction: column; gap: 8px; }
+details { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+details summary { cursor: pointer; padding: 10px 12px; font-size: 15px; list-style: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "＋ "; color: var(--accent); font-weight: 700; }
+details[open] summary::before { content: "－ "; }
+details > div { padding: 0 12px 12px; font-size: 15px; }
+/* keyboard */
+.kb { display: flex; flex-direction: column; gap: 4px; overflow-x: auto; padding: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.kb .r { display: flex; gap: 4px; }
+.kb .k { flex: 0 0 auto; width: 30px; height: 34px; display: grid; place-items: center; border-radius: 4px; font-family: var(--mono); font-size: 13px; color: var(--fg); border: 1px solid var(--line); }
+.kb .k.home { box-shadow: inset 0 -3px 0 var(--fg); font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--line); }
+.f0 { background: var(--f0); } .f1 { background: var(--f1); } .f2 { background: var(--f2); } .f3 { background: var(--f3); } .f4 { background: var(--f4); }
+.f5 { background: var(--f5); } .f6 { background: var(--f6); } .f7 { background: var(--f7); } .f8 { background: var(--f8); }
+/* flash card */
+.card { display: flex; flex-direction: column; gap: 14px; padding: 20px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); min-height: 220px; }
+.card .q { font-size: 18px; font-weight: 700; font-family: var(--display); }
+.keycaps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cap { font-family: var(--mono); font-size: 18px; font-weight: 700; padding: 4px 10px; min-width: 40px; text-align: center; border: 1px solid var(--fg); border-bottom-width: 3px; border-radius: 6px; background: var(--bg); }
+.plus { color: var(--muted); }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.chip { flex: 0 0 auto; min-height: 36px; padding: 4px 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--paper); color: var(--fg); font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+/* quiz */
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice { text-align: left; min-height: 48px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--fg); font-size: 15px; line-height: 1.6; }
+.choice.right { border-color: var(--good); background: var(--accent-soft); font-weight: 700; }
+.choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.feedback { font-size: 15px; padding: 12px; border-radius: 8px; background: var(--soft); }
+.feedback b { color: var(--good); }
+.feedback b.no { color: var(--bad); }
+.bigkey { font-family: var(--mono); font-size: 44px; font-weight: 700; text-align: center; padding: 6px 0; }
+.fingers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fingers .choice { text-align: center; }
+.score { font-family: var(--display); font-size: 40px; font-weight: 900; }
+/* sheet tabs (bottom navigation) */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--soft); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+nav.tabs .in { max-width: 640px; margin: 0 auto; display: flex; padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+.tab { flex: 1 1 0; min-width: 0; min-height: 52px; padding: 6px 2px; border: 0; border-right: 1px solid var(--line); background: none; color: var(--muted); font-size: 12px; line-height: 1.3; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.tab:last-child { border-right: 0; }
+.tab .ab { font-family: var(--mono); font-size: 11px; }
+.tab[aria-current="page"] { background: var(--paper); color: var(--accent); font-weight: 700; box-shadow: inset 0 -3px 0 var(--accent); }
+.theme-btn { border: 1px solid var(--line); background: var(--bg); color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 4px; min-height: 30px; }
+@media (prefers-reduced-motion: no-preference) { .choice, .btn, .tile { transition: background .15s, border-color .15s; } }
+
+/* アプリ版：画面の上端（時計などの帯）の分だけ下げる */
+html { padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="in">
+  <span class="namebox" id="namebox">A1</span><span class="fx">fx</span>
+  <span class="crumb" id="crumb">ホーム</span>
+  <button class="theme-btn" id="theme" type="button" aria-label="表示の明るさを切り替える">表示</button>
+</div></header>
+<main class="wrap" id="app"></main>
+<nav class="tabs" aria-label="メニュー"><div class="in" id="tabs"></div></nav>
+
+<script type="application/json" id="data">{"stages":[{"id":0,"title":"はじめの一歩","desc":"セルへの入力と、「=」で始まる数式の基本を身につけます。","tasks":[{"id":"s0_input","stage":0,"title":"セルに入力する","summary":"文字と数値を、指定されたセルに入力します。","kind":"task","limit_min":null,"lesson":[{"p":"Excelの画面は、たくさんのマス目でできています。このマス目1つを「セル」と呼びます。"},{"p":"セルの場所は、上に並ぶアルファベット（列）と、左に並ぶ数字（行）を組み合わせて呼びます。たとえば B列の3行目は「B3」です。"},{"sheet":{"rows":[["商品","単価","数量"],["ノート",180,5],["","",""]],"note":"この表で、「ノート」は A2、「180」は B2、「5」は C2 に入っています。"}},{"p":"入力のしかた：セルをクリックして選び、そのままキーボードで打ち、Enter で確定します。Enter を押すと下のセルへ、Tab を押すと右のセルへ移動します。"},{"tip":"数字は必ず半角で入力します。日本語入力がオンのときは、半角/全角キーでオフにしてから数字を打つと確実です。"},{"tip":"打ち間違えたら、そのセルを選んでもう一度打てば上書きされます。"}],"hints":["行ごとに、左から右へ入力すると速く入力できます。A2 を選んで商品名を打ったら、Tab で B2 へ進みます。","C列まで入力したら Enter を押します。すると、次の行の A列に戻ります（Tab で進んだ場合）。","入力後に左寄せになっている数字は「文字」として入っています。半角で打ち直してください。"]},{"id":"s0_edit","stage":0,"title":"入力を直す・消す","summary":"間違えて入力した内容を、上書き・F2・Delete で直したり消したりします。","kind":"task","limit_min":null,"lesson":[{"p":"入力を間違えたとき、やり直す方法は3つあります。「上書き」「編集」「消去」です。"},{"p":"上書きは、セルを選んで、そのまま新しい内容を入力する方法です。セルの中身がまるごと新しい入力に置き換わります。短い内容を直すときに向いています。"},{"p":"編集は、セルの中身の一部だけを直す方法です。セルを選んで F2 キーを押すと、セルの中に文字を打つ位置（カーソル）が出て、途中の文字だけを直せます。直したら Enter で確定します。"},{"p":"消去は、セルの中身を消す方法です。セルを選んで Delete キーを押します。セルの場所そのものは消えず、中身だけが空になります。"},{"sheet":{"rows":[["商品","単価","数量"],["ノート",180,5],["ホチキス",480,2]],"note":"たとえば B2 の 180 を 160 に直したいときは、B2 を選んで 160 と入力して Enter。中身を消したいセルは、選んで Delete。"}},{"ex":["セルを選んで、そのまま入力 → Enter","上書き。セルの中身が置き換わります。"]},{"ex":["セルを選んで F2 → 直す → Enter","編集。中身の一部だけを直せます。"]},{"ex":["セルを選んで Delete","消去。中身が消えて空になります。"]},{"tip":"直している途中でやめたいときは Esc キーを押します。そのセルの入力は取り消されて、元の内容に戻ります。"},{"tip":"間違えて消してしまったときは、Ctrl + Z で1つ前の状態に戻せます。"}],"hints":["直すセルの場所は、手順に書いてあります。まずそのセルをクリックして選びます。直す量が少ないか、全部打ち直すかで、使う方法を決めます。","直す方法は、上書き（そのまま入力）、編集（F2 キー）、消去（Delete キー）の3つです。誤字や数値は上書きか F2、不要なセルは Delete を使います。","A列と C列の直すセルは、選んで正しい内容を入力して Enter。B列は選んで F2 を押し、直して Enter。不要なメモのセルは、選んで Delete。最後に Ctrl + S。"]},{"id":"s0_formula","stage":0,"title":"はじめての数式","summary":"「=」から始めて、セルを使った足し算・引き算・掛け算をします。","kind":"task","limit_min":null,"lesson":[{"p":"Excelでは、セルに「数式」を入れると、計算をExcelに任せられます。数式は必ず半角の「=」（イコール）から始めます。"},{"sheet":{"rows":[["商品","単価","数量","金額"],["ノート",180,5,"=B2*C2"]],"note":"D2 に =B2*C2 と入力して Enter を押すと、セルには計算結果の 900 が表示されます。"}},{"p":"数式の中の B2 や C2 は「そのセルに入っている値」という意味です。これを「セル参照」と呼びます。=180*5 と数値を直接書いても同じ結果になりますが、仕事では使いません。セル参照で書いておけば、単価を 200 に書き換えたとき、金額も自動で 1000 に変わるからです。"},{"ex":["=B2+C2","足し算（+）"]},{"ex":["=B2-C2","引き算（-）"]},{"ex":["=B2*C2","掛け算（*  アスタリスク。× ではありません）"]},{"ex":["=B2/C2","割り算（/  スラッシュ。÷ ではありません）"]},{"tip":"数式を入力するときは、= を打ったあと、使いたいセルをマウスでクリックしても B2 と入ります。"},{"tip":"セルを選ぶと、画面上部の「数式バー」に、そのセルの数式が表示されます。結果ではなく中身を確かめたいときに見ます。"}],"hints":["数式は、答えを出したいセルを選んでから = を打って始めます。数値そのものではなく、数値が入っているセルの場所を書きます。","金額は「その行の単価のセル × その行の数量のセル」です。合計は + で、残りは - で求めます。","D2 は =B2*C2、D3 は =B3*C3、D4 は =B4*C4。B7 は =D2+D3+D4、B8 は =B6-B7 です。"]},{"id":"s0_copy","stage":0,"title":"数式をコピーする","summary":"1つ作った数式を、下の行へコピーして表を埋めます。","kind":"task","limit_min":null,"lesson":[{"p":"表には、同じ計算をする行がたくさん並びます。1行ずつ数式を打つのは大変なので、1つ作った数式を下へ「コピー」します。"},{"p":"数式をコピーすると、数式の中のセルの場所は、行に合わせて自動で変わります。人が直す必要はありません。"},{"sheet":{"rows":[["商品","単価","数量","金額"],["ノート",180,5,"=B2*C2"],["ホチキス",480,2,"=B3*C3"],["付箋",240,4,"=B4*C4"]],"note":"D2 の =B2*C2 を下へコピーすると、D3 は =B3*C3、D4 は =B4*C4 と、行の番号が1つずつ増えます。"}},{"p":"コピーの方法は2つあります。1つ目は「フィルハンドル」です。セルを選ぶと、右下に小さな ■ が出ます。これをつかんで下へドラッグすると、ドラッグした範囲に数式がコピーされます。"},{"ex":["セル右下の ■ を下へドラッグ","ドラッグした行まで数式がコピーされます。"]},{"ex":["コピーしたい範囲を選んで Ctrl + D","選んだ範囲の一番上のセルを、下のセルすべてにコピーします（D は Down＝下の意味）。"]},{"tip":"コピーしたあと、コピー先のセルを選んで数式バーを見ます。行の番号がその行に合わせて変わっていれば成功です。"}],"hints":["金額も支払額も、どの行でも同じ形の計算です。1行目の数式を1つだけ作り、残りの行はコピーで埋めます。","コピーには、セル右下の ■（フィルハンドル）を下へドラッグする方法か、範囲を選んで Ctrl + D を押す方法を使います。","D2 は =B2*C2、F2 は =D2-E2。それぞれ選んで、■ を 9 行目までドラッグします。"]},{"id":"s0_test","stage":0,"title":"確認テスト：買い物メモ","summary":"入力と数式を、ヒントなしで仕上げます。合格すると第1段階が開きます。","kind":"test","limit_min":10,"lesson":[],"hints":[]}]},{"id":1,"title":"基本操作","desc":"オートフィル、書式設定、形式を選択して貼り付け。表を整える操作です。","tasks":[{"id":"s1_series","stage":1,"title":"オートフィル：連続データ","summary":"フィルハンドルをドラッグして、連番・日付・月の名前を一気に入力します。","kind":"task","limit_min":null,"lesson":[{"p":"「オートフィル」は、セルの内容をもとに、ドラッグした範囲へ自動で入力してくれる機能です。セル右下の小さな ■（フィルハンドル）を、入れたい方向へドラッグして使います。"},{"p":"日付や「1月」「月曜日」のような決まった並びのものは、ドラッグするだけで続きが入ります。"},{"sheet":{"rows":[["番号","日付","月"],[1,"2026/4/1","1月"],[2,"2026/4/2","2月"],[3,"2026/4/3","3月"]],"note":"1つ目のセルだけを入れて、フィルハンドルをドラッグすると、日付は1日ずつ、月は1か月ずつ進みます。"}},{"p":"ただし、数字（1 など）を1つだけ入れてドラッグすると、連番ではなく同じ数がコピーされます。連番にする方法は2つあります。"},{"ex":["1 と 2 を続けて入れる → 2つを選択 → ■ をドラッグ","2つの数の差（1ずつ）を読み取って、続きが入ります。"]},{"ex":["1 を入れる → Ctrl を押しながら ■ をドラッグ","1つのセルから、連番を作れます。"]},{"ex":["ドラッグしたあと、右下に出る「オートフィルオプション」のボタン → 連続データ","あとから、コピーを連番に変えられます。"]},{"tip":"ドラッグの途中、マウスのそばに、いま入る最後の値が表示されます。目的の値になるところで手を離します。"}],"hints":["最初の1つ（または2つ）を手がかりにして、続きは自動で入れてもらいます。1つずつ入力する必要はありません。","セル右下の ■（フィルハンドル）を使うオートフィルです。数字はそのままだとコピーになるので、Ctrl を押しながらドラッグするのがコツです。","A2 を選び、Ctrl を押しながら ■ を A21 までドラッグ。B2 は ■ を B21 までドラッグ。D1 は ■ を右へ O1 までドラッグ。"]},{"id":"s1_fill_formula","stage":1,"title":"オートフィル：数式を一気にコピー","summary":"行数の多い表で、ダブルクリックと Ctrl + D を使って、数式をまとめてコピーします。","kind":"task","limit_min":null,"lesson":[{"p":"前の課題では、数式をドラッグでコピーしました。でも、30行や100行の表で、ドラッグを最後まで続けるのは大変です。行数が多いときのために、もっと速い方法があります。"},{"p":"1つ目は、フィルハンドル（セル右下の ■）を「ダブルクリック」する方法です。左隣の列のデータがある最後の行まで、数式が一気にコピーされます。"},{"sheet":{"rows":[["日付","商品","単価","数量","金額"],["2026/4/1","ノート",180,5,"=C2*D2"],["2026/4/2","付箋",240,3,""],["…","…","…","…","…"]],"note":"E2 に数式を入れて、右下の ■ をダブルクリックすると、データが続く最後の行まで E列に数式が入ります。"}},{"p":"2つ目は、範囲を選んで Ctrl + D を押す方法です。範囲は、1行目のセルから最後の行のセルまでです。最後の行まで一気に選択するには、Ctrl + Shift + ↓ が便利です。"},{"ex":["数式のセルの右下の ■ をダブルクリック","左隣の列にデータのある最後の行まで、数式がコピーされます。"]},{"ex":["数式のセルを選ぶ → Ctrl + Shift + ↓ → Ctrl + D","選んだ範囲の下へ、一番上の数式をコピーします。"]},{"tip":"ダブルクリックでコピーされる行数は、左隣の列のデータの長さで決まります。左の列が途中で空白になっていると、そこで止まります。コピーしたあと、一番下の行まで数式が入ったか、必ず確かめます。"}],"hints":["金額も税込金額も、全部の行で同じ形の計算です。1行目に数式を1つ作り、残りの行はコピーで埋めます。","行数が多いので、ドラッグではなく、フィルハンドル（■）のダブルクリック、または範囲を選んで Ctrl + D を使います。","E2 は =C2*D2、F2 は =E2*1.1。E2 の ■ をダブルクリック。F2 を選んで Ctrl + Shift + ↓ ではなく、F2 から F31 までを選び、Ctrl + D。"]},{"id":"s1_header","stage":1,"title":"見出しを整える（太字・色・中央揃え）","summary":"表の見出しに書式を設定して、見やすくします。","kind":"task","limit_min":null,"lesson":[{"p":"セルの「書式」とは、文字の太さや色、セルの色、文字の位置など、見た目の設定のことです。書式を変えても、セルに入っている値は変わりません。"},{"p":"書式を設定するときは、まず設定したいセルを選択します。複数のセルは、最初のセルをクリックしてから、最後のセルまでドラッグすると選択できます。"},{"p":"書式のボタンは、画面上部の「ホーム」タブに並んでいます。"},{"ex":["B（太字）","「ホーム」タブ → フォント の B ボタン。ショートカットは Ctrl + B。"]},{"ex":["塗りつぶしの色","「ホーム」タブ → フォント の、バケツの絵のボタン。横の ▼ で色を選べます。"]},{"ex":["中央揃え","「ホーム」タブ → 配置 の、横線が中央にそろった絵のボタン。"]},{"tip":"見出しは「太字＋薄い色＋中央揃え」にするのが、仕事の表でよく使われる形です。濃い色は文字が読みにくくなるので避けます。"}],"hints":["まず A1 をクリックし、そのまま D1 までドラッグして、見出しの4つのセルを選択します。選択したまま書式のボタンを押します。","使うのは「ホーム」タブの3つのボタンです：B（太字）、バケツ（塗りつぶしの色）、中央揃え。","A1〜D1 を選択 → Ctrl + B → バケツの ▼ から薄い色を選ぶ → 中央揃えのボタンを押す → Ctrl + S。"]},{"id":"s1_numfmt","stage":1,"title":"表示形式：桁区切り・日付・パーセント","summary":"数値の見せ方（表示形式）を変えて、読みやすい表にします。","kind":"task","limit_min":null,"lesson":[{"p":"「表示形式」とは、セルの値をどんな見た目で表示するかの設定です。大事なのは、見た目だけが変わり、中の値は変わらないということです。"},{"sheet":{"rows":[["入力した値","表示形式を変えたあとの見た目"],[1234567,"1,234,567"],[0.853,"85.3%"],[46113,"2026/4/1"]],"note":"0.853 をパーセント表示にしても、セルの中身は 0.853 のままです。計算には 0.853 が使われます。"}},{"p":"日付は、Excelの中では「1900年1月1日から何日目か」という通し番号の数値です。表示形式を日付にすると、通し番号が 2026/4/1 のような見慣れた形で表示されます。"},{"ex":["Ctrl + 1","「セルの書式設定」画面を開きます。「表示形式」タブで、日付や桁区切りなどを選べます。"]},{"ex":["Ctrl + Shift + 1","桁区切り（1,234）にするショートカット。"]},{"ex":["Ctrl + Shift + 3","日付の表示にするショートカット。"]},{"ex":["Ctrl + Shift + 5","パーセント表示にするショートカット。小数点以下の桁数は「ホーム」タブの「小数点以下の表示桁数を増やす」で調整します。"]},{"tip":"見た目を変えたいだけなのに、値を打ち直してはいけません。表示形式を使えば、元の値のまま見た目を整えられます。"}],"hints":["見た目を変えるだけで、値を打ち直す必要はありません。列ごとに範囲を選んで、表示形式を設定します。","セルを選択して Ctrl + 1 を押すと、「セルの書式設定」が開きます。ショートカットは Ctrl + Shift + 1（桁区切り）、Ctrl + Shift + 3（日付）、Ctrl + Shift + 5（パーセント）です。","A2〜A9 を選んで Ctrl + Shift + 3。C2〜C9 を選んで Ctrl + Shift + 1。D2〜D9 を選んで Ctrl + Shift + 5 を押し、「小数点以下の表示桁数を増やす」を1回押して 85.3% の形にします。"]},{"id":"s1_border","stage":1,"title":"罫線と列幅","summary":"表に格子の罫線を引き、切れた文字が読めるよう列の幅を広げます。","kind":"task","limit_min":null,"lesson":[{"p":"画面に見える薄い灰色の線は、印刷されません。表として印刷したり見せたりするには、自分で「罫線」を引きます。罫線は、セルの周りに引く線のことです。"},{"p":"罫線を引くには、範囲を選択して、「ホーム」タブの罫線ボタン（四角い格子の絵）の横の ▼ から、「格子」を選びます。"},{"sheet":{"rows":[["部署","人数"],["営業部 営業企画担当",12]],"note":"列の幅が狭いと、長い文字は右のセルにかぶさるか、切れて表示されます。"}},{"p":"列の幅は、列の見出し（A、B、C…）の境界をドラッグすると変えられます。境界をダブルクリックすると、その列で一番長い文字に合わせて、自動で幅が調整されます。"},{"ex":["列の境界をダブルクリック","例：A と B の境目にマウスを合わせ、矢印の形に変わったらダブルクリック。"]},{"ex":["Ctrl + Shift + &","選択した範囲の周りに罫線を引くショートカットです。"]},{"tip":"文字が切れているかどうかは、表を印刷や提出する前に必ず確認します。"}],"hints":["罫線は「引きたい範囲を選んでから」設定します。列の幅は、列ごとに調整します。","「ホーム」タブの罫線ボタン（▼）から「格子」を選びます。列の幅は、列見出しの境界のダブルクリックで自動調整できます。","A1 から D7 までをドラッグして選択 → 罫線ボタンの ▼ → 「格子」。A列と B列の見出しの境界をダブルクリック。Ctrl + S。"]},{"id":"s1_paste_values","stage":1,"title":"値だけを貼り付ける","summary":"数式の計算結果だけを、数値として別の場所に貼り付けます。","kind":"task","limit_min":null,"lesson":[{"p":"数式の入ったセルをコピーして、ふつうに貼り付ける（Ctrl + V）と、貼り付くのは「数式」です。しかも、数式の中のセル参照は、貼り付けた場所に合わせてずれます。"},{"sheet":{"rows":[["単価","数量","金額","","貼り付け先"],[120,3,"=A2*B2","","=C2*D2"]],"note":"C2 の =A2*B2 を E2 にふつうに貼り付けると =C2*D2 に変わってしまい、意味のない計算になります。"}},{"p":"計算結果の数値だけを貼り付けたいときは、「形式を選択して貼り付け」の「値」を使います。ほかの人に渡す資料を作るときや、元データを消しても結果を残したいときによく使います。"},{"ex":["Ctrl + C → 貼り付け先を選択 → Ctrl + Alt + V → 「値」を選んで OK","「形式を選択して貼り付け」の画面から選ぶ方法。"]},{"ex":["Ctrl + C → 貼り付け先を選択 → Ctrl + Shift + V","値だけを貼り付けるショートカット（Microsoft 365）。"]},{"ex":["Ctrl + C → 貼り付け先を右クリック → 貼り付けのオプションの「123」の絵","マウスで操作する方法。"]},{"tip":"貼り付けたあと、セルを選んで数式バーを見ます。= から始まる数式ではなく、数値そのものが表示されていれば成功です。"}],"hints":["コピーまではいつもと同じです。違うのは貼り付け方だけです。Ctrl + V ではなく、「値」だけを貼り付ける方法を使います。","D2 をクリックし、Shift を押しながら最後の金額のセルをクリックすると、まとめて選択できます。Ctrl + C でコピーし、F2 をクリックします。","F2 を選択した状態で Ctrl + Shift + V を押します（または Ctrl + Alt + V →「値」→ OK）。最後に Ctrl + S。"]},{"id":"s1_test","stage":1,"title":"確認テスト：売上表を仕上げる","summary":"数式のコピー、書式、罫線、値の貼り付けを、ヒントなしで仕上げます。合格すると第2段階が開きます。","kind":"test","limit_min":12,"lesson":[],"hints":[]}]},{"id":2,"title":"基本の関数","desc":"SUM・AVERAGE・COUNT・ROUND・IF と、相対参照・絶対参照・複合参照。","tasks":[{"id":"s2_sum","stage":2,"title":"SUM：合計を求める","summary":"SUM関数で、横の合計と縦の合計を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"「関数」は、よく使う計算をExcelがあらかじめ用意してくれたものです。「=関数名(材料)」の形で書きます。かっこの中の材料を「引数（ひきすう）」と呼びます。"},{"p":"SUM（サム）は、合計を求める関数です。足したいセルの範囲を、かっこの中に書きます。"},{"sheet":{"rows":[["商品","4月","5月","6月","合計"],["ノート",12,30,25,"=SUM(B2:D2)"]],"note":"B2:D2 は「B2 から D2 まで」という意味です。=B2+C2+D2 と同じ結果（67）になります。"}},{"p":"足すセルが3つなら + でも書けますが、100行の合計を + で書くのは現実的ではありません。SUM なら =SUM(B2:B101) と書くだけです。"},{"ex":["=SUM(B2:D2)","横に並んだセルの合計"]},{"ex":["=SUM(B2:B7)","縦に並んだセルの合計"]},{"tip":"合計を出したいセルを選んで Alt + Shift + =（オートSUM）を押すと、Excelが範囲を予想して SUM を入れてくれます。予想された範囲が正しいかは、必ず自分の目で確かめます。"},{"tip":"範囲は、= SUM( まで打ったあと、マウスでドラッグしても入力できます。"}],"hints":["合計は SUM関数で求めます。「どこからどこまでを足すか」を、最初のセルと最後のセルで指定します。","E2 は、同じ行の B列から D列までの合計です。数式を1つ作ったら、残りはコピー（セル右下の ■ を下へドラッグ）で埋められます。","E2 は =SUM(B2:D2)。これを E7 までコピー。B8 は =SUM(B2:B7)。これを右へ E8 までコピー。"]},{"id":"s2_stats","stage":2,"title":"AVERAGE・MAX・MIN：平均・最高・最低","summary":"平均点、最高点、最低点を、関数で一度に求めます。","kind":"task","limit_min":null,"lesson":[{"p":"SUM と同じように、範囲を渡すだけで計算してくれる関数が、ほかにもあります。よく使う3つを覚えましょう。"},{"sheet":{"rows":[["名前","点数"],["佐藤",70],["鈴木",85],["高橋",55],["平均","=AVERAGE(B2:B4)"],["最高","=MAX(B2:B4)"],["最低","=MIN(B2:B4)"]],"note":"この例では、平均は 70、最高は 85、最低は 55 になります。"}},{"ex":["=AVERAGE(B2:B11)","平均（アベレージ）。範囲の数値を足して、個数で割った値です。"]},{"ex":["=MAX(B2:B11)","最大値（マックス）。範囲の中で一番大きい数です。"]},{"ex":["=MIN(B2:B11)","最小値（ミニマム）。範囲の中で一番小さい数です。"]},{"tip":"範囲に見出しの文字（「点数」など）を入れないよう注意します。数値だけを範囲にします。"}],"hints":["平均・最高・最低は、どれも「点数の範囲」を渡せば求まります。範囲は3つとも同じです。","平均は AVERAGE、最高点は MAX、最低点は MIN。かっこの中に点数の範囲を書きます。","E2 は =AVERAGE(B2:B11)、E3 は =MAX(B2:B11)、E4 は =MIN(B2:B11)。"]},{"id":"s2_count","stage":2,"title":"COUNT・COUNTA・COUNTBLANK：数える","summary":"名簿の人数、受験者数、欠席者数を、3種類の数える関数で求めます。","kind":"task","limit_min":null,"lesson":[{"p":"Excelには、セルの「個数」を数える関数があります。数えるものによって、3つを使い分けます。"},{"sheet":{"rows":[["名前","点数"],["佐藤",70],["鈴木",""],["高橋",55]],"note":"B2〜B4 のうち、COUNT は 2（数値の個数）、COUNTBLANK は 1（空白の個数）です。名前の列を COUNTA で数えると 3 です。"}},{"ex":["=COUNT(B2:B4)","数値が入っているセルの個数。文字は数えません。"]},{"ex":["=COUNTA(A2:A4)","空白ではないセルの個数。文字も数値も数えます。名簿の人数を数えるのに便利です。"]},{"ex":["=COUNTBLANK(B2:B4)","空白のセルの個数。入力のもれを探すときに使います。"]},{"tip":"COUNT は数値だけ、COUNTA は空白以外ぜんぶ、COUNTBLANK は空白だけ、と覚えます。提出物の列のような「文字」を数えるときは、COUNT ではなく COUNTA を使います。"}],"hints":["「何を数えたいか」で関数を選びます。名簿の人数は「空白以外すべて」、受験者数は「数値だけ」、欠席者数は「空白」です。","名簿の人数は COUNTA、受験者数は COUNT、欠席者数は COUNTBLANK を使います。","F2 は =COUNTA(A2:A13)、F3 は =COUNT(B2:B13)、F4 は =COUNTBLANK(B2:B13)。"]},{"id":"s2_round","stage":2,"title":"ROUND・ROUNDUP・ROUNDDOWN：端数を処理する","summary":"四捨五入・切り上げ・切り捨ての3つの関数で、端数を処理します。","kind":"task","limit_min":null,"lesson":[{"p":"割り算や税の計算では、1円未満や小数の「端数」が出ます。端数の処理には、3つの関数を使い分けます。どれも =関数名(数値, 桁数) の形で、「桁数」は、どの位置までを残すかを表します。"},{"sheet":{"rows":[["元の数","ROUND(…,0)","ROUNDUP(…,0)","ROUNDDOWN(…,0)"],[12.4,12,13,12],[12.6,13,13,12]],"note":"ROUND は四捨五入、ROUNDUP は切り上げ、ROUNDDOWN は切り捨てです。桁数 0 は「小数点以下をなくす」という意味です。"}},{"ex":["=ROUND(B2/C2,1)","小数第1位までに四捨五入します（桁数 1 は、小数第1位まで残す）。"]},{"ex":["=ROUNDDOWN(B2*0.1,0)","整数にして、小数点以下を切り捨てます。消費税の計算でよく使います。"]},{"ex":["=ROUNDUP(D2/C2,0)","整数にして、小数点以下を切り上げます。必要な箱数や人数を求めるときに使います。"]},{"tip":"桁数は、1 なら小数第1位、0 なら整数、-1 なら十の位までを丸めます。表示形式で見た目だけ丸めるのと違い、関数は値そのものを丸めます。"}],"hints":["端数の処理は3種類です。税は切り捨て、割り算の結果は四捨五入、箱数のように足りなくなると困るものは切り上げです。","消費税は ROUNDDOWN、1個あたりの価格は ROUND、必要な箱数は ROUNDUP を使います。桁数は、0 または 1 です。","E2 は =ROUNDDOWN(B2*0.1,0)、F2 は =ROUND(B2/C2,1)、G2 は =ROUNDUP(D2/C2,0)。3つを選んで、9行目までコピーします。"]},{"id":"s2_if","stage":2,"title":"IF：条件で表示を変える","summary":"点数が基準以上かどうかで、「合格」「不合格」を自動で表示します。","kind":"task","limit_min":null,"lesson":[{"p":"IF（イフ）関数は、「もし〇〇なら A、そうでなければ B」という判断を、Excelにさせる関数です。かっこの中に、3つの部分をカンマで区切って書きます。"},{"sheet":{"rows":[["名前","点数","判定"],["佐藤",72,"=IF(B2>=60,\"合格\",\"不合格\")"],["鈴木",48,""]],"note":"=IF(条件, 合っているとき, 合っていないとき)。B2 が 60 以上なので、C2 には「合格」と表示されます。"}},{"p":"1つ目は「条件」（B2>=60 など）、2つ目は条件が合っているときの表示、3つ目は合っていないときの表示です。表示に使う文字は、半角の \" \"（ダブルクォーテーション）で囲みます。数値は囲みません。"},{"ex":["> と <","「より大きい」「より小さい」。その数そのものは含みません。"]},{"ex":[">= と <=","「以上」「以下」。その数そのものを含みます。"]},{"ex":["= と <>","「等しい」「等しくない」。例：=IF(C2=\"提出\",…)"]},{"tip":"「60点以上」は >=60 です。>60 だと、ちょうど60点の人が不合格になってしまいます。境目の人で確かめましょう。"}],"hints":["「点数が基準以上か」で、表示を2つに分けます。合っているときは「合格」、合っていないときは「不合格」です。","IF関数を使います。条件は、点数のセル >= 基準点 と書きます。表示に使う文字は \" \" で囲みます。","C2 は =IF(B2>=基準点の数字,\"合格\",\"不合格\")。基準点は手順に書いてある数字です。これを最後の行までコピーします。"]},{"id":"s2_if_calc","stage":2,"title":"IF：条件で計算を変える","summary":"金額が基準額以上なら送料 0、未満なら送料を加える、という計算を IF で行います。","kind":"task","limit_min":null,"lesson":[{"p":"前の課題では、IF で「合格」「不合格」という文字を出しました。IF の「合っているとき」「合っていないとき」には、数値や計算式も書けます。条件によって、計算の結果を変えたいときに使います。"},{"sheet":{"rows":[["注文","金額","送料"],["注文01",4200,"=IF(B2>=5000,0,600)"],["注文02",5800,""]],"note":"B2 が 5000 以上なら 0、そうでなければ 600 が C2 に入ります。この例では 4200 なので 600 です。"}},{"p":"文字を表示するときは \" \" で囲みましたが、数値は囲みません。0 も 600 も、そのまま書きます。"},{"ex":["=IF(B2>=5000,0,600)","金額が 5000 以上なら 0、未満なら 600。"]},{"ex":["=B2+C2","IF で求めた送料を使って、請求額を求める。"]},{"tip":"送料の金額（600 など）は、今回は数式の中に直接書いてかまいません。（金額が変わりやすいときは別のセルに書いて参照しますが、それは次の課題で学びます。）"}],"hints":["送料は、金額が基準額以上かどうかで決まります。まず送料の列を作り、そのあと請求額の列で、金額と送料を足します。","送料は IF関数で、条件は 金額のセル >= 基準額。請求額は、金額のセル + 送料のセル です。","C2 は =IF(B2>=基準額,0,送料)。基準額と送料は手順に書いてある数字です。D2 は =B2+C2。両方を最後の行までコピーします。"]},{"id":"s2_abs","stage":2,"title":"絶対参照：$ で参照を固定する","summary":"コピーしてもずれない参照（$A$1）を使って、構成比を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"数式を下へコピーすると、数式の中のセル参照は1行ずつ下へずれます。=B2*C2 が =B3*C3、=B4*C4 になるのはこのためで、これを「相対参照」と呼びます。ふだんはこれが便利です。"},{"p":"ところが、「全部の行で同じセルを使いたい」ときは、ずれると困ります。たとえば構成比は、どの行でも「売上 ÷ 合計」で、合計のセルは1つだけです。"},{"sheet":{"rows":[["支店","売上","構成比"],["東京",500,"=B2/B4"],["大阪",300,"=B3/B5"],["合計",800,""]],"note":"C2 の =B2/B4 を下へコピーすると、C3 は =B3/B5 になります。B5 は空なので、エラー（#DIV/0!）になります。"}},{"p":"ずらしたくない参照には、列の文字と行の数字の前に $ を付けます。これを「絶対参照」と呼びます。"},{"sheet":{"rows":[["支店","売上","構成比"],["東京",500,"=B2/$B$4"],["大阪",300,"=B3/$B$4"],["合計",800,""]],"note":"$B$4 と書いておけば、どこへコピーしても B4 のままです。B2 のほうは $ がないので、B3 にずれます。"}},{"ex":["F4 キー","数式の入力中に、セル参照にカーソルを置いて F4 を押すと、$ が自動で付きます。押すたびに $B$4 → B$4 → $B4 → B4 と切り替わります。"]},{"tip":"「コピーしたら、この参照はずれてほしいか？ ずれてほしくないか？」を、数式を書くときに毎回考えます。"}],"hints":["構成比は「その支店の売上 ÷ 売上の合計」です。支店の売上は行ごとに変わりますが、合計のセルは全部の行で同じです。","合計のセル（B8）の参照に $ を付けて固定します。数式の入力中に B8 をクリックした直後に F4 を押すと、$ が付きます。","B8 は =SUM(B2:B7)。C2 は =B2/$B$8。これを C7 までコピーします。"]},{"id":"s2_mixed","stage":2,"title":"複合参照：行だけ・列だけ固定する","summary":"$ を列だけ・行だけに付けて、1つの数式で早見表全体を作ります。","kind":"task","limit_min":null,"lesson":[{"p":"前の課題では、$B$4 のように、列も行も固定しました。実は、$ は「列だけ」「行だけ」にも付けられます。早見表（掛け算表）のように、右にも下にもコピーするときに便利です。"},{"sheet":{"rows":[["単価＼数量",2,3],[100,"=$A2*B$1",""],[200,"",""]],"note":"$A2 は「A列は固定、行は動く」。B$1 は「1行目は固定、列は動く」。これを右・下にコピーすると、すべてのセルで正しく計算されます。"}},{"ex":["$A2","列（A）だけ固定。右へコピーしても A列のまま。下へコピーすると A3、A4 と動く。"]},{"ex":["B$1","行（1）だけ固定。下へコピーしても 1行目のまま。右へコピーすると C1、D1 と動く。"]},{"ex":["F4 キー","押すたびに $B$1 → B$1 → $B1 → B1 と切り替わります。"]},{"tip":"「右へコピーするとき、ずれてはいけないのは？ 下へコピーするとき、ずれてはいけないのは？」を、1つずつ考えます。ずれてはいけない方向の文字に $ を付けます。"}],"hints":["単価は A列に、数量は 1行目にあります。右へコピーしても単価は A列のまま、下へコピーしても数量は 1行目のままにしたいのです。","単価は列だけを固定（$A2）、数量は行だけを固定（B$1）します。数式の入力中に F4 を押すと、$ の付き方が切り替わります。","B2 は =$A2*B$1。これを F2 までコピーしたあと、B2〜F2 を選んで、6行目までコピーします。"]},{"id":"s2_test","stage":2,"title":"確認テスト：成績表","summary":"合計・平均・IF・最高点・絶対参照を、ヒントなしで仕上げます。","kind":"test","limit_min":15,"lesson":[],"hints":[]}]},{"id":3,"title":"実務関数","desc":"条件付きの集計（COUNTIF・SUMIF など）、表から探す（XLOOKUP・VLOOKUP）、文字と日付の関数。","tasks":[{"id":"s3_countif","stage":3,"title":"COUNTIF：条件に合う件数を数える","summary":"売上記録のうち、地区が「東京」のものは何件か、のような条件付きの件数を数えます。","kind":"task","limit_min":null,"lesson":[{"p":"COUNTIF（カウント・イフ）は、「条件に合うセルだけ」の個数を数える関数です。=COUNTIF(範囲, 条件) の形で、範囲の中から条件に合うものを探して、その件数を答えます。"},{"sheet":{"rows":[["地区","金額"],["東京",3000],["大阪",5000],["東京",2000]],"note":"=COUNTIF(A2:A4,\"東京\") と入力すると、A2〜A4 のうち「東京」のセルは2つなので、答えは 2 になります。"}},{"ex":["=COUNTIF(A2:A4,\"東京\")","条件に文字を直接書く方法。文字は半角の \" \" で囲みます。"]},{"ex":["=COUNTIF(A2:A4,D2)","条件をセルで指定する方法。D2 に「東京」と書いておけば同じ答えになります。D2 を「大阪」に変えるだけで、数える対象が変わるので便利です。"]},{"tip":"集計表のように、条件が何種類もあるときは、セルを条件にしておくと、数式を下へコピーするだけで全部の地区を数えられます。そのとき、範囲（A2:A4 の部分）は $A$2:$A$4 のように固定します。"}],"hints":["地区の列（D列）の中から、集計表の地区と同じ文字のセルを探して、その個数を数えます。","条件に合うものの個数を数える COUNTIF関数を使います。範囲は地区の列、条件は G列の地区名のセルです。","H2 は =COUNTIF($D$2:$D$31,G2)。範囲には $ を付けて固定してから、H5 までコピーします。"]},{"id":"s3_sumif","stage":3,"title":"SUMIF：条件に合う合計","summary":"担当者ごとの売上合計のように、条件に合う行だけを足し算します。","kind":"task","limit_min":null,"lesson":[{"p":"SUMIF（サム・イフ）は、「条件に合う行だけ」を合計する関数です。=SUMIF(条件の範囲, 条件, 合計する範囲) と、3つの部分をカンマで区切って書きます。"},{"sheet":{"rows":[["担当者","金額"],["佐藤",3000],["鈴木",5000],["佐藤",2000]],"note":"=SUMIF(A2:A4,\"佐藤\",B2:B4) は、A列が「佐藤」の行（2行目と4行目）の金額を足して、5000 になります。"}},{"ex":["1つ目：条件の範囲","条件に合うかどうかを調べる列です（例：担当者の列）。"]},{"ex":["2つ目：条件","探す文字や数字です。セルを指定すると、下へコピーしやすくなります。"]},{"ex":["3つ目：合計する範囲","足し算する数字の列です（例：金額の列）。1つ目と同じ行数にします。"]},{"tip":"集計表の数式を下へコピーすると、$ を付けていない範囲は1行ずつずれて、合計がおかしくなります。範囲は $B$2:$B$31 のように、行も列も $ で固定します。条件のセル（G2 など）は、ずれてよいので固定しません。"}],"hints":["担当者の列から、集計表と同じ名前の行を探して、その行の金額だけを足します。","SUMIF関数を使います。条件の範囲は担当者の列、条件は G列の名前のセル、合計する範囲は金額の列です。","H2 は =SUMIF($B$2:$B$31,G2,$E$2:$E$31)。これを H5 までコピーします。"]},{"id":"s3_countifs_sumifs","stage":3,"title":"COUNTIFS・SUMIFS：条件が2つ以上","summary":"「地区が東京で、商品がノート」のように、条件を2つ以上組み合わせて合計や件数を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"COUNTIF・SUMIF の名前の最後に S（複数）が付いた COUNTIFS・SUMIFS は、条件を2つ以上指定して、「すべてに合う行」だけを数えたり、足したりします。"},{"sheet":{"rows":[["地区","商品","金額"],["東京","ノート",300],["東京","ペン",100],["大阪","ノート",200]],"note":"=SUMIFS(C2:C4,A2:A4,\"東京\",B2:B4,\"ノート\") は、地区が東京で、商品もノートの行だけを足して、300 になります。"}},{"ex":["=SUMIFS(合計する範囲, 範囲1, 条件1, 範囲2, 条件2)","合計する範囲が最初に来ます。条件は、範囲と条件のペアで増やせます。"]},{"ex":["=COUNTIFS(範囲1, 条件1, 範囲2, 条件2)","数える範囲は不要で、範囲と条件のペアだけを並べます。"]},{"ex":["\">=\"&M2","「M2 以上」という条件の書き方。記号（>= など）は \" \" で囲み、& でセルとつなげます。セルの値を変えるだけで、条件の数字を変えられます。"]},{"tip":"表の行（地区）と列（商品）で条件が決まるときは、$G2 と H$1 のように、行だけ・列だけ固定すると、1つの数式を右と下へコピーするだけで表全体を埋められます。"}],"hints":["地区と商品の両方が合う行だけを足します。件数のほうは、地区が合って、金額が基準額以上の行を数えます。","条件が2つなので、SUMIFS と COUNTIFS を使います。基準額の条件は \">=\"&M2 のように書きます。","H2 は =SUMIFS($E$2:$E$31,$D$2:$D$31,$G2,$C$2:$C$31,H$1)。K2 は =COUNTIFS($D$2:$D$31,$G2,$E$2:$E$31,\">=\"&$M$2)。"]},{"id":"s3_averageifs","stage":3,"title":"AVERAGEIFS：条件に合う平均","summary":"部署ごとの平均点のように、条件に合う行だけの平均を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"AVERAGEIFS（アベレージ・イフス）は、条件に合う行だけの平均を求める関数です。=AVERAGEIFS(平均する範囲, 条件の範囲, 条件) と書きます。SUMIFS と同じく、求めたい数字の範囲が最初に来ます。"},{"sheet":{"rows":[["部署","点数"],["営業部",80],["総務部",60],["営業部",70]],"note":"=AVERAGEIFS(B2:B4,A2:A4,\"営業部\") は、営業部の2人（80 と 70）の平均で、75 になります。"}},{"ex":["=AVERAGEIFS($C$2:$C$25,$B$2:$B$25,E2)","部署の列から E2 と同じ部署を探し、その人たちの点数の平均を求めます。"]},{"tip":"AVERAGE は全員の平均、AVERAGEIFS は「条件に合う人だけ」の平均です。割り切れない平均は、小数がたくさん続くことがあります。この課題では、そのままで構いません。"}],"hints":["部署の列から集計表と同じ部署の行を探して、その人たちの点数の平均を求めます。","AVERAGEIFS関数を使います。最初に平均する範囲（点数の列）、次に条件の範囲（部署の列）、最後に条件（E列の部署名）です。","F2 は =AVERAGEIFS($C$2:$C$25,$B$2:$B$25,E2)。これを F5 までコピーします。"]},{"id":"s3_xlookup","stage":3,"title":"XLOOKUP：表から探して取り出す","summary":"商品コードをもとに、商品マスタから商品名と単価を自動で取り出します。","kind":"task","limit_min":null,"lesson":[{"p":"仕事では、「商品コードを入れると、商品名と値段が自動で出てくる」ような表をよく使います。商品名や値段をすべて手で入力するのは大変で、間違いのもとです。そこで、別の場所にある一覧表（マスタ）から探して取り出す関数、XLOOKUP（エックス・ルックアップ）を使います。"},{"sheet":{"rows":[["コード","商品名","単価"],["A1","ノート",180],["A2","ペン",120],["A3","のり",150]],"note":"=XLOOKUP(\"A2\",A2:A4,B2:B4) は、A2〜A4 から「A2」を探して、同じ行の B列の値「ペン」を返します。"}},{"ex":["=XLOOKUP(B2,$H$2:$H$9,$I$2:$I$9)","B2 の値を H2〜H9 から探し、同じ行の I列の値（商品名）を取り出します。"]},{"ex":["=XLOOKUP(B2,$H$2:$H$9,$J$2:$J$9)","取り出す範囲を J列にすると、単価が取り出せます。"]},{"tip":"探す範囲と取り出す範囲は、下へコピーしてもずれないよう $ で固定します。探す値（B2）は行に合わせて動かします。探す範囲と取り出す範囲は、行数を同じにします。"}],"hints":["注文表の商品コードを、商品マスタのコードの列から探して、同じ行にある商品名・単価を取り出します。","探して取り出す XLOOKUP関数を使います。探す値、探す範囲（コードの列）、取り出す範囲（商品名または単価の列）の3つを指定します。","D2 は =XLOOKUP(B2,$H$2:$H$9,$I$2:$I$9)、E2 は取り出す範囲を $J$2:$J$9 に変えます。F2 は =E2*C2。"]},{"id":"s3_xlookup_missing","stage":3,"title":"見つからないときの表示：XLOOKUP の4つ目の引数・IFERROR","summary":"マスタにないコードが入っていても、エラーではなく「該当なし」と表示させます。","kind":"task","limit_min":null,"lesson":[{"p":"XLOOKUP で探しても、見つからないことがあります（入力ミスや、まだ登録されていないコードなど）。そのとき、何も指定しないと、#N/A というエラーが表示されます。エラーだらけの表は読みづらいので、見つからないときの表示を決めておきます。"},{"sheet":{"rows":[["コード","商品名"],["A1","ノート"],["A2","ペン"],["A9","=XLOOKUP(A9,A2:A3,B2:B3,\"該当なし\")"]],"note":"A9 はコードの一覧にないので、4つ目の引数に書いた「該当なし」が表示されます。"}},{"ex":["=XLOOKUP(B2,$H$2:$H$9,$I$2:$I$9,\"該当なし\")","4つ目の引数が「見つからないときの表示」です。文字は半角の \" \" で囲みます。"]},{"ex":["=IFERROR(XLOOKUP(B2,$H$2:$H$9,$I$2:$I$9),\"該当なし\")","IFERROR（イフ・エラー）は、「中の数式がエラーになったら、代わりにこれを表示する」という関数です。XLOOKUP 以外にも使えます。"]},{"tip":"どちらの書き方でも正解です。IFERROR は、エラーの原因が何であっても隠してしまうので、数式の書き間違いにも気づきにくくなります。見つからないときの表示だけが目的なら、XLOOKUP の4つ目の引数が確実です。"}],"hints":["商品コードがマスタにないときは、エラーになります。そのときだけ、別の表示に切り替えたいのです。","XLOOKUP の4つ目の引数（見つからないときの表示）を使います。IFERROR関数で、数式全体を包んでも構いません。","D2 は =XLOOKUP(B2,$H$2:$H$9,$I$2:$I$9,\"該当なし\")。E2 は取り出す範囲を $J$2:$J$9 に変えます。"]},{"id":"s3_vlookup","stage":3,"title":"VLOOKUP：古いファイルでよく見る関数","summary":"XLOOKUP の前から使われている VLOOKUP を、会社の古いファイルが読めるように練習します。","kind":"task","limit_min":null,"lesson":[{"p":"VLOOKUP（ブイ・ルックアップ）は、XLOOKUP と同じ「表から探して取り出す」関数で、XLOOKUP より前から使われています。会社の古いファイルには、今でもたくさん使われているので、自分で書けなくても「読める」ようにしておきましょう。"},{"sheet":{"rows":[["コード","商品名","単価"],["A1","ノート",180],["A2","ペン",120],["A3","のり",150]],"note":"=VLOOKUP(\"A2\",A2:C4,2,FALSE) は、表（A2〜C4）の左端の列から「A2」を探し、同じ行の2列目「ペン」を返します。"}},{"ex":["=VLOOKUP(B2,$H$2:$J$9,2,FALSE)","B2 を、表の左端（H列）から探し、同じ行の左から2列目（商品名）を取り出します。"]},{"ex":["列番号の数え方","表の範囲の左端を 1 として、右へ 1、2、3 と数えます。H〜J列なら、H＝1、I＝2、J＝3 です。"]},{"tip":"4つ目の引数には、必ず FALSE（完全一致）を付けます。省略したり TRUE にしたりすると、近い値で探す動きになり、並び方によっては、間違った商品が表示されます。しかも、エラーにならないので気づきにくいです。また、VLOOKUP は、探す値が表の範囲の「左端の列」にある必要があります。"}],"hints":["注文表の商品コードを、マスタの左端のコードの列から探し、同じ行の商品名・単価を取り出します。","VLOOKUP関数を使います。探す値、表の範囲（H〜J列）、列番号（左から数える）、FALSE の4つを指定します。","D2 は =VLOOKUP(B2,$H$2:$J$9,2,FALSE)、E2 は列番号を 3 に変えます。そのあと 13行目までコピーします。"]},{"id":"s3_ifs_andor","stage":3,"title":"IFS と AND・OR：条件が3つ以上","summary":"点数からA〜Dの評価を付ける IFS と、「2科目とも基準以上」のような条件を作る AND・OR を学びます。","kind":"task","limit_min":null,"lesson":[{"p":"IF は「合っている／合っていない」の2通りに分けます。3通り以上に分けたいときは、IFS（イフ・エス）を使います。条件と表示のペアを、上から順に並べて書きます。"},{"sheet":{"rows":[["点数","評価"],[85,"=IFS(A2>=80,\"A\",A2>=60,\"B\",TRUE,\"C\")"],[70,""],[40,""]],"note":"85 点は最初の条件（80 以上）に合うので「A」。70 点は2番目の条件に合うので「B」。どれにも合わなければ、最後の TRUE の「C」です。"}},{"ex":["IFS の順番","上から順に調べて、最初に合った条件の表示を使います。大きい基準（80以上）から先に書きます。最後に TRUE を置くと、「それ以外」の表示になります。"]},{"ex":["AND(条件1, 条件2)","「かつ」。すべての条件が合っているときだけ「合っている」になります。=IF(AND(B2>=60,C2>=60),\"合格\",\"不合格\")"]},{"ex":["OR(条件1, 条件2)","「または」。どれか1つでも合っていれば「合っている」になります。"]},{"tip":"IFS は新しい関数です。古いファイルでは、IF を入れ子にした =IF(B2>=80,\"A\",IF(B2>=65,\"B\",…)) の形がよく使われます。どちらで書いても、この課題は合格になります。"}],"hints":["評価は、「80点以上か、違えば65点以上か、…」と上から順に調べます。合否は、国語と数学の両方が基準以上かどうかです。","評価は IFS関数（または IF の入れ子）、合否は IF関数の条件に AND関数を入れます。","D2 は =IFS(B2>=80,\"A\",B2>=65,\"B\",B2>=50,\"C\",TRUE,\"D\")。E2 は =IF(AND(B2>=基準点,C2>=基準点),\"合格\",\"不合格\")。"]},{"id":"s3_text","stage":3,"title":"文字の関数：LEFT・RIGHT・MID・LEN と &","summary":"社員コードから地区・入社年・番号を取り出し、姓と名をつなげます。","kind":"task","limit_min":null,"lesson":[{"p":"「TKY-2024-153」のように、いくつかの情報が1つの文字にまとまっているデータは、よくあります。文字の関数を使うと、この中から必要な部分だけを取り出せます。"},{"sheet":{"rows":[["社員コード","LEFT(A2,3)","MID(A2,5,4)","RIGHT(A2,3)","LEN(A2)"],["TKY-2024-153","TKY","2024","153",12]],"note":"LEFT は左から、RIGHT は右から、MID は指定した位置から取り出します。LEN は文字数です（「-」も1文字）。"}},{"ex":["=LEFT(A2,3)","左から3文字を取り出します。"]},{"ex":["=MID(A2,5,4)","5文字目から4文字を取り出します。（MID(文字, 開始位置, 文字数)）"]},{"ex":["=RIGHT(A2,LEN(A2)-9)","右から、「全体の文字数 − 9」文字を取り出します。後ろの桁数が人によって違うときの定番の形です。"]},{"ex":["=B2&\" \"&C2","& は、文字をつなぐ記号です。間に入れるスペースも、\" \" で囲んで1つの文字としてつなぎます。"]},{"tip":"関数で取り出した「2024」は、見た目は数字でも、Excelの中では「文字」として扱われます（左寄せで表示されます）。この課題では、文字のままで構いません。"}],"hints":["社員コードは「地区3文字 - 入社年4文字 - 番号」の形です。何文字目から何文字を取り出すかを、数えて考えます。","地区は LEFT、入社年は MID、番号は RIGHT と LEN、氏名は & で文字をつなぎます。","D2 は =LEFT(A2,3)、E2 は =MID(A2,5,4)、F2 は =RIGHT(A2,LEN(A2)-9)、G2 は =B2&\" \"&C2（半角スペース）、H2 は =LEN(A2)。"]},{"id":"s3_date","stage":3,"title":"日付の関数：YEAR・MONTH・DATE・EOMONTH","summary":"請求日から年・月を取り出し、「翌月末」の支払期限を自動で求めます。","kind":"task","limit_min":null,"lesson":[{"p":"Excelは、日付を「数字」として覚えていて、日付の関数を使うと、年や月を取り出したり、「翌月末」のような日付を計算したりできます。"},{"sheet":{"rows":[["請求日","年","月","翌月末"],["2026/4/15","=YEAR(A2)","=MONTH(A2)","=EOMONTH(A2,1)"],["",2026,4,"2026/5/31"]],"note":"YEAR は年、MONTH は月を取り出します。EOMONTH(日付,1) は、1か月先の月の末日です。"}},{"ex":["=YEAR(B2) / =MONTH(B2)","日付から年、月の数字を取り出します。"]},{"ex":["=EOMONTH(B2,1)","翌月末の日付。月数を 0 にすると今月末、-1 にすると先月末です。月末の日が 30 日か 31 日かを、自分で考えなくて済みます。"]},{"ex":["=DATE(2026,4,1)","年・月・日の3つの数字から日付を作ります。セルを使って =DATE(C2,D2,1) と書くこともできます。"]},{"tip":"今日の日付を入れる =TODAY() という関数もあります。ただし、ファイルを開くたびに日付が変わるので、この課題では使いません。答えのセルには、日付の表示形式（例：2026/5/31）があらかじめ付いています。数字で表示されたら、表示形式を日付にします。"}],"hints":["年と月は、日付から取り出します。支払期限は、請求日の「次の月の最後の日」です。","年は YEAR、月は MONTH、翌月末は EOMONTH、月初の日付は DATE を使います。","C2 は =YEAR(B2)、D2 は =MONTH(B2)、E2 は =EOMONTH(B2,1)、F2 は =DATE(C2,D2,1)。"]},{"id":"s3_test","stage":3,"title":"確認テスト：注文データの集計","summary":"XLOOKUP・SUMIF・COUNTIFS・IF を組み合わせて、注文データを集計します。","kind":"test","limit_min":20,"lesson":[],"hints":[]}]},{"id":4,"title":"データ整理","desc":"並べ替え、フィルター、テーブル、入力規則、重複の削除など、データを整える操作。","tasks":[{"id":"s4_sort","stage":4,"title":"並べ替え：基準を2つ使う","summary":"支店ごとにまとめ、その中で金額の大きい順に並べ替えます。","kind":"task","limit_min":null,"lesson":[{"p":"「並べ替え」は、表の行の順番を、ある列の値の順に入れ替える操作です。小さい順を「昇順（しょうじゅん）」、大きい順を「降順（こうじゅん）」と呼びます。"},{"p":"大切なのは、行をまるごと動かすことです。1つの列だけを選んで並べ替えると、その列だけが動き、ほかの列とのつながりが壊れてしまいます。表の中のセルを1つ選ぶだけで、Excelが表全体を見つけてくれます。"},{"sheet":{"rows":[["支店","金額"],["大阪",50000],["東京",80000],["大阪",120000],["東京",30000]],"note":"「支店」→「金額の大きい順」で並べると：大阪 120,000 → 大阪 50,000 → 東京 80,000 → 東京 30,000"}},{"p":"基準を2つ使うときは、「データ」タブの「並べ替え」で「レベルの追加」を押します。まず1つ目の基準（最優先されるキー）で並び、同じ値どうしの中で2つ目の基準が使われます。"},{"ex":["データ → 並べ替え","基準を複数指定できる画面が開く"]},{"tip":"基準が1つだけなら、「データ」タブの「昇順」「降順」のボタン（A→Z、Z→A）でもすぐに並べ替えられます。"},{"tip":"漢字の並び順は、Excelが読み仮名を使って決めることがあります。この課題では、同じ支店がまとまっていれば、支店どうしの順番は問いません。"}],"hints":["支店でまとめるのが1つ目の基準、その中の金額の順が2つ目の基準です。","「データ」タブの「並べ替え」を使い、「レベルの追加」で2つ目の基準を足します。","最優先されるキー：支店（昇順）、次に優先されるキー：金額（大きい順）。表の中のセルを1つ選んでから始めます。"]},{"id":"s4_filter","stage":4,"title":"フィルター：絞り込んで別のシートへ","summary":"フィルターで1つの支店だけに絞り、その行を新しいシートに貼り付けます。","kind":"task","limit_min":null,"lesson":[{"p":"「フィルター」は、表の中から条件に合う行だけを表示する機能です。条件に合わない行は消えるのではなく、一時的に隠れるだけです。元のデータは書き換わりません。"},{"p":"表の中のセルを選んで Ctrl + Shift + L を押すと、見出しに▼のボタンが付きます。▼を押すと、その列にある値の一覧が出るので、残したい値にだけチェックを入れます。もう一度 Ctrl + Shift + L を押すと、フィルターが外れます。"},{"sheet":{"rows":[["支店","金額"],["東京",500],["大阪",300],["東京",800]],"note":"「支店」を東京だけにすると、2行目と4行目が見え、3行目（大阪）は隠れます。"}},{"ex":["Ctrl + Shift + L","フィルターを付ける・外す"]},{"p":"絞り込んだ表をコピーして別のシートに貼り付けると、見えている行だけが貼り付きます（隠れた行は含まれません）。新しいシートは、画面下のシート名の右にある「＋」で追加できます。"},{"tip":"絞り込みをやめたいときは、Ctrl + Shift + L でフィルターを外します。この課題は、フィルターを外し忘れても、元のデータの値が同じなら合格です。"}],"hints":["支店ごとにまとめたいわけではなく、1つの支店の行だけを取り出して別のシートに置きたい課題です。","「フィルター」（Ctrl + Shift + L）で絞り込み、コピーして新しいシートに貼り付けます。","Ctrl + Shift + L →「支店」の▼で1つだけにチェック → 見出しごと選んで Ctrl + C → 新しいシートの A1 で Ctrl + V。"]},{"id":"s4_table","stage":4,"title":"テーブルにする","summary":"表を「テーブル」に変えて、名前を付け、合計の行（集計行）を表示します。","kind":"task","limit_min":null,"lesson":[{"p":"「テーブル」は、ふつうの表を、Excelが「ひとかたまりの表」として扱えるようにする機能です。表の中のセルを1つ選んで Ctrl + T を押すだけで、表がテーブルに変わります。"},{"p":"テーブルには、次の利点があります。①下に行を足すと、範囲が自動で広がる。②画面を下へスクロールしても、見出しが列の名前（A、B、C…）の場所に表示される。③1行おきに色が付いて（縞模様）見やすい。④各列の見出しに、並べ替え・絞り込みのボタンが付く。"},{"sheet":{"rows":[["支店","金額"],["東京",500],["大阪",300],["集計",800]],"note":"集計行は、テーブルの一番下に出る合計などの行です。金額の列は、表示中の行だけを足す SUBTOTAL 関数になります。"}},{"ex":["Ctrl + T","表をテーブルにする"]},{"p":"テーブルには名前を付けられます（「テーブルデザイン」タブの左端）。名前を付けておくと、あとで数式やピボットテーブルから「売上表」のように名前で呼び出せます。集計行も、同じタブの「集計行」にチェックを入れるだけで出てきます。"},{"tip":"集計行の右端のセルを選ぶと▼が出て、合計のほかに平均・個数なども選べます。"}],"hints":["表を、ひとかたまりの「テーブル」にします。名前と、合計を出す行も設定します。","表の中を選んで Ctrl + T。そのあと現れる「テーブルデザイン」タブで、名前と「集計行」を設定します。","Ctrl + T → OK →「テーブルデザイン」タブでテーブル名を「売上表」に →「集計行」にチェック。"]},{"id":"s4_validation","stage":4,"title":"入力規則：リストから選ばせる","summary":"支店の入力欄に、決まった項目だけを選べるリスト（▼）を付けます。","kind":"task","limit_min":null,"lesson":[{"p":"表に入力するとき、「東京」「とうきょう」「東京支店」のように、人によって書き方がばらばらになると、あとで集計できません。「入力規則」を使うと、セルに入力できる内容を決めておけます。"},{"p":"中でもよく使うのが「リスト」です。セルを選ぶと▼が出て、決まった項目の中から選んで入力できます。リストにない文字を入力しようとすると、エラーの画面が出て止めてくれます。"},{"sheet":{"rows":[["支店","（選べる項目）"],["東京","東京"],["","大阪"],["","福岡"]],"note":"左の「支店」の列に入力規則を設定すると、▼を押して、右の3つから選べるようになります。"}},{"ex":["データ → データの入力規則 → リスト","「元の値」に選ばせたい項目を指定する"]},{"p":"「元の値」には2通りの指定のしかたがあります。①表の外のセルに項目の一覧を作っておき、その範囲を指定する（項目を直すときは一覧を書き換えるだけで済むので、おすすめです）。②「東京,大阪,福岡」のように、半角のカンマで区切って直接書く。"},{"tip":"設定したあとで、セルに入力規則が付いているかは、そのセルを選んで▼が出るかどうかで確かめられます。"}],"hints":["黄色のセルに、決まった支店だけを選ばせたい課題です。選べる項目は、表の右にある一覧です。","「データ」タブの「データの入力規則」で、入力値の種類を「リスト」にします。","黄色のセルを選ぶ →「データの入力規則」→ リスト →「元の値」に =$F$2:$F$4（一覧をマウスで選ぶ）→ OK。"]},{"id":"s4_dedupe","stage":4,"title":"重複の削除","summary":"まったく同じ行が混ざった名簿から、重複した行を削除します。","kind":"task","limit_min":null,"lesson":[{"p":"名簿などを集めると、同じ人の行が何回も入ってしまうことがあります。そのままだと、人数や合計を数えるときにまちがいのもとです。「重複の削除」を使うと、同じ内容の行を、1行だけ残して取り除けます。"},{"p":"どの列を比べるかを選べます。「顧客ID」の列だけを選べば、IDが同じ行は消えます。すべての列を選べば、全部の列がぴったり同じ行だけが消えます。この課題では、すべての列を基準にします。"},{"sheet":{"rows":[["ID","氏名"],["C1","佐藤 健"],["C2","鈴木 誠"],["C1","佐藤 健"]],"note":"すべての列を基準に削除すると、4行目（C1・佐藤 健）が消えます。最初に出てきた行が残り、順番はそのままです。"}},{"ex":["データ → 重複の削除","表の中を選んでから押し、基準にする列を選ぶ"]},{"p":"削除したあとは、行が上に詰まり、いちばん下に空の行が増えます。削除された行は元に戻せないので、不安なときは、先にシートや表をコピーしておくと安心です（まちがえたら、すぐ Ctrl + Z）。"},{"tip":"文字の大文字と小文字は区別されません。見た目が同じでも、前後に空白が入っていると、別の値として扱われます。"}],"hints":["「まったく同じ行」を1つだけ残して消します。どの列で比べるかも大切です。","「データ」タブの「重複の削除」を使います。","表の中を選ぶ →「データ」→「重複の削除」→ すべての列にチェックが入っているのを確かめて OK。"]},{"id":"s4_split","stage":4,"title":"区切り位置：1つのセルを複数の列に分ける","summary":"「佐藤 健」のように1つのセルに入った氏名を、姓と名の2つの列に分けます。","kind":"task","limit_min":null,"lesson":[{"p":"ほかのシステムから持ってきたデータでは、「佐藤 健」のように、姓と名が1つのセルにまとまっていることがよくあります。あとで並べ替えや集計をするには、列を分けておくほうが便利です。"},{"p":"「データ」タブの「区切り位置」を使うと、スペースやカンマなどの「区切り文字」を目印にして、1つのセルの文字を複数の列に分けられます。画面の案内に沿って、区切り文字を選び、最後に「表示先」（分けた結果を置く場所）を決めます。"},{"sheet":{"rows":[["氏名","姓","名"],["佐藤 健","佐藤","健"],["鈴木 誠","鈴木","誠"]],"note":"左のA列を、スペースを目印に、右の2つの列に分けます。"}},{"ex":["データ → 区切り位置","区切り文字（スペースやカンマ）で、セルの文字を列に分ける"]},{"p":"「表示先」を最初のまま（A2）にすると、分けた結果が元のセルに上書きされ、元の氏名が消えてしまいます。元のデータを残したいときは、表示先を別のセル（この課題では B2）に変えます。"},{"tip":"もう1つの方法が「フラッシュフィル」です。B2 に「佐藤」と手で入力して、B3 で Ctrl + E を押すと、Excelが規則を読み取って、下のセルを自動で埋めてくれます。うまくいかないときは、区切り位置を使います。"}],"hints":["A列の氏名を、スペースの前と後ろで、2つの列に分けます。元の A列は残します。","「データ」タブの「区切り位置」を使います（または、Ctrl + E のフラッシュフィルでも分けられます）。","A2〜A13 を選ぶ →「区切り位置」→「次へ」→ 区切り文字は「スペース」→「次へ」→ 表示先を B2 にして「完了」。"]},{"id":"s4_cleanup","stage":4,"title":"データのお掃除：置換と TRIM","summary":"書き方がばらばらな会社名を置換でそろえ、氏名の余分な空白を TRIM 関数で取り除きます。","kind":"task","limit_min":null,"lesson":[{"p":"集めたデータには、「株式会社」と「（株）」が混ざっていたり、氏名の前後に余分な空白が入っていたりします。見た目はほとんど同じでも、Excelは別の文字として扱うので、並べ替えや検索がうまくいきません。こうしたばらつきを直すことを「データのお掃除」と呼びます。"},{"p":"まず「置換」です。Ctrl + H で「検索と置換」の画面が開きます。「検索する文字列」を「置換後の文字列」に、まとめて書き換えられます。選んでいる範囲だけが対象になるので、先に範囲を選んでおくのがコツです。"},{"sheet":{"rows":[["置換前","置換後"],["（株）山田商事","株式会社山田商事"],["株式会社東光電機","株式会社東光電機"]],"note":"「（株）」を「株式会社」に置換した例。すでに「株式会社」の行は変わりません。"}},{"ex":["Ctrl + H","検索と置換の画面を開く"]},{"p":"次に「TRIM（トリム）」関数です。=TRIM(B2) とすると、B2 の文字から、前後の空白を取り除き、文字の間に2つ以上続いている空白は1つにまとめてくれます。置換のように元のセルは書き換えないので、隣の列に求めます。ここでいう空白は半角スペースです（全角スペースは取り除かれません）。"},{"tip":"TRIM で整えたあと、元の列を消したいときは、結果を「値」で貼り付けてから（形式を選択して貼り付け）、元の列を削除します。"}],"hints":["会社名は、書き換えて表記をそろえます。氏名は、元の列を残して、隣の列に整えた結果を求めます。","会社名は Ctrl + H の「置換」、氏名は TRIM 関数を使います。","置換：「（株）」→「株式会社」で「すべて置換」。氏名：C2 に =TRIM(B2) を入力して、下へコピー。"]},{"id":"s4_dynamic","stage":4,"title":"UNIQUE・SORT・FILTER：結果があふれ出す関数","summary":"1つのセルに入れた数式の結果が、下や右へ自動で広がる関数を使います。","kind":"task","limit_min":null,"lesson":[{"p":"ふつうの数式は、1つのセルに1つの結果を返します。でも Microsoft 365 の Excel には、1つのセルに数式を入れるだけで、結果が下や右のセルへ自動で広がる関数があります。この広がり方を「スピル（あふれ出す）」といいます。"},{"p":"代表が3つあります。UNIQUE（ユニーク）は重複をなくした一覧、SORT（ソート）は並べ替えた結果、FILTER（フィルター）は条件に合う行だけの表を返します。コピーする必要はなく、先頭のセルに入れて Enter を押すだけです。"},{"sheet":{"rows":[["支店","","UNIQUE の結果"],["東京","","東京"],["大阪","","大阪"],["東京","",""]],"note":"=UNIQUE(A2:A4) を C2 に入れると、東京・大阪の2つが C2・C3 に広がります（東京の重複はなくなる）。"}},{"ex":["=UNIQUE(A2:A21)","A2〜A21 の重複をなくした一覧"]},{"ex":["=SORT(C2:C21,1,-1)","C2〜C21 を大きい順（-1）に並べる"]},{"ex":["=FILTER(A2:C21,A2:A21=\"東京\")","支店が東京の行だけを取り出す"]},{"p":"広がる先のセルに、すでに何か入っていると、「#SPILL!（スピル）」というエラーになります。広がる範囲を空けておくか、邪魔なデータを動かします。広がった結果のセルを選ぶと、青い枠で結果全体が囲まれます。"},{"tip":"広がった結果は、先頭のセルの数式から作られています。2つ目以降のセルは書き換えられません。元のデータが変わると、結果も自動で変わります。"}],"hints":["結果が広がる関数です。数式を入れるのは、E2・G2・I2 の先頭の1セルだけです。","E2 は UNIQUE、G2 は SORT、I2 は FILTER 関数を使います。","=UNIQUE(A2:A21)　／　=SORT(C2:C21,1,-1)　／　=FILTER(A2:C21,A2:A21=\"支店名\")（支店名は手順にある文字）。"]},{"id":"s4_test","stage":4,"title":"確認テスト：名簿を整える","summary":"重複の削除・置換・並べ替え・テーブル・入力規則を組み合わせて、名簿を整えます。","kind":"test","limit_min":20,"lesson":[],"hints":[]}]},{"id":5,"title":"集計と分析","desc":"条件付き書式、ピボットテーブル、グラフで、データを集計して見やすく示します。","tasks":[{"id":"s5_cf_value","stage":5,"title":"条件付き書式：基準より大きいセルに色","summary":"売上が基準の金額より大きいセルに、自動で色が付くようにします。","kind":"task","limit_min":null,"lesson":[{"p":"数字がたくさん並んだ表では、目立たせたい値を探すのが大変です。「条件付き書式」を使うと、条件に合うセルにだけ、色などの書式が自動で付きます。"},{"p":"手で色を塗るのとのちがいは、値が変わると色も自動で変わることです。たとえば売上を打ち直して基準を超えたら、そのセルに色が付き、基準以下になれば色が消えます。"},{"sheet":{"rows":[["担当者","売上"],["佐藤",280],["鈴木",350],["高橋",300]],"note":"「300 より大きい」で色を付けると、350 のセルだけに色が付きます。300 ちょうどは「より大きい」に入りません。"}},{"ex":["ホーム → 条件付き書式 → セルの強調表示ルール → 指定の値より大きい","基準の値と書式を決める"]},{"p":"「セルの強調表示ルール」には、「指定の値より大きい」のほかにも、「より小さい」「指定の範囲内」「等しい」「文字列」などが入っています。設定したルールを消すときは、「条件付き書式」→「ルールのクリア」を使います。"},{"tip":"色を付ける前に、範囲を選ぶのを忘れずに。1つのセルだけ選んで設定すると、そのセルにしか色が付きません。"}],"hints":["基準の値より大きいセルだけに色を付けます。色は、値に応じて自動で付くようにします。","「ホーム」タブの「条件付き書式」→「セルの強調表示ルール」を使います。","B2〜B16 を選ぶ →「条件付き書式」→「セルの強調表示ルール」→「指定の値より大きい」→ 基準の値を入力 →「書式」を選んで OK。"]},{"id":"s5_cf_formula","stage":5,"title":"条件付き書式：数式で行ごとに色","summary":"達成率が100%に届いていない行を、行全体に色を付けて目立たせます。","kind":"task","limit_min":null,"lesson":[{"p":"前の課題では、色を付けるセル自身の値で条件を決めました。でも「達成率の列の値で、その行全体に色を付けたい」ときは、別のセルの値で判断する必要があります。そのときは、条件付き書式に「数式」を使います。"},{"p":"数式は、条件に合うときに TRUE（真）になる式を書きます。たとえば =$E2<1 は、「E2 が 1 より小さければ色を付ける」という意味です。数式は、選んだ範囲の左上のセルのつもりで書きます。Excelが、ほかのセルには自動でずらして当てはめてくれます。"},{"sheet":{"rows":[["担当者","達成率"],["佐藤","120%"],["鈴木","85%"],["高橋","95%"]],"note":"=$B2<1 で A2〜B4 に色を付けると、鈴木と高橋の行は、A列もB列も色が付きます（行全体に色）。"}},{"ex":["=$E2<1","E列の値が1未満なら、その行に色を付ける"]},{"p":"ここで大切なのが「$（ドル）」です。「複合参照」の課題で学んだように、$E は「列を E に固定する」という意味です。行の方は $ を付けないので、下の行へ進むと 2 → 3 → 4 と自動でずれます。もし $ を付けずに =E2<1 と書くと、右のセルでは F2、G2… を見に行ってしまい、思ったとおりに色が付きません。"},{"tip":"見出し行を範囲に含めると、見出しの文字も判定されてしまいます。データの部分だけを選んでから設定しましょう。"}],"hints":["達成率の列を見て、その行全体に色を付けます。判断するセルを、行ごとに変えながら、列だけは動かさないのがポイントです。","「条件付き書式」の「新しいルール」→「数式を使用して、書式設定するセルを決定」を使います。列だけを $ で固定します。","データ部分（A2〜E13）を選ぶ →「新しいルール」→ 数式を使用… → =$E2<1 →「書式」で色を選んで OK。"]},{"id":"s5_pivot","stage":5,"title":"ピボットテーブル：項目ごとに集計する","summary":"ピボットテーブルで、支店ごとの売上の合計を、数式を使わずに求めます。","kind":"task","limit_min":null,"lesson":[{"p":"ピボットテーブルは、たくさんの行のデータを「○○ごとの合計」のような表に、マウス操作だけでまとめる機能です。SUMIF で1つずつ数式を作る代わりに、項目をドラッグするだけで集計表ができます。"},{"p":"ピボットテーブルには、項目を置く欄が4つあります。「行」（表の左に縦に並ぶ見出し）、「列」（上に横に並ぶ見出し）、「値」（集計する数値）、「フィルター」（絞り込み）です。"},{"sheet":{"rows":[["支店","金額"],["東京",1200],["大阪",800],["東京",500],["大阪",300]],"note":"行＝支店、値＝金額 にすると：東京 1,700 ／ 大阪 1,100 ／ 総計 2,800 という表ができます。"}},{"ex":["挿入 → ピボットテーブル","表の中のセルを1つ選んでから押すと、表全体が元データになる"]},{"p":"元のデータを書き換えたときは、ピボットテーブルの中を右クリック →「更新」を押すと、集計し直されます（自動では変わりません）。"},{"tip":"数値の項目を「値」に置くと、ふつうは「合計」になります。文字の項目を置くと「個数」になります。集計方法は、値の項目をクリック →「値フィールドの設定」で変えられます。"}],"hints":["「支店ごとの合計」は、行に支店、値に金額を置いたピボットテーブルで作れます。","「挿入」タブの「ピボットテーブル」を使います。作ったら、右側のフィールドの一覧から項目を欄へドラッグします。","行の欄：支店　／　値の欄：金額（合計 / 金額）。列とフィルターの欄は空のままにします。"]},{"id":"s5_pivot2","stage":5,"title":"ピボットテーブル：列・フィルター・月ごとにまとめる","summary":"日付を月ごとにまとめ、支店を列に、商品をフィルターに置いて、金額を集計します。","kind":"task","limit_min":null,"lesson":[{"p":"ピボットテーブルでは、「行」だけでなく「列」も使うと、縦と横の両方で集計できます。たとえば、行＝月、列＝支店にすると、「月 × 支店」の表ができます。"},{"p":"「フィルター」の欄に項目を置くと、表の上に絞り込みのボタンが付きます。たとえば「商品」を置けば、「全部」「ボールペンだけ」のように、集計の対象をあとから切り替えられます。"},{"sheet":{"rows":[["月","東京","大阪"],["1月",500,300],["2月",200,400]],"note":"行＝月、列＝支店、値＝金額の合計。（表の上には、フィルターの「商品」が付きます。）"}},{"ex":["日付のセルを右クリック → グループ化","日付を「月」「年」などの単位でまとめる"]},{"p":"日付は、日ごとのままだと行が増えすぎます。そこで「グループ化」で、月ごとにまとめます。最近のExcelでは、日付を行に置くと、自動で「月」にまとまることがあります。まとまっていれば、そのままで大丈夫です。"},{"tip":"ピボットテーブルの項目を取り除くときは、フィールドの一覧のチェックを外すか、欄の外へドラッグします。"}],"hints":["行・列・フィルター・値の4つの欄に、それぞれ決まった項目を置きます。日付は月ごとにまとめます。","「挿入」タブの「ピボットテーブル」を使い、日付の「グループ化」で月を選びます。","行：日付（月）　／　列：支店　／　フィルター：商品　／　値：金額（合計）。"]},{"id":"s5_ratio","stage":5,"title":"構成比と前年比","summary":"支店ごとの売上が全体の何%か（構成比）と、昨年の何%か（前年比）を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"売上の金額だけを見ても、大きいのか小さいのかが分かりにくいことがあります。そこで「割合」を使います。ここでは、よく使う2つの割合を求めます。"},{"p":"「構成比」は、全体の中で、その項目が占める割合です。計算は「その項目 ÷ 全体の合計」です。「前年比」は、前の年と比べて何%か。計算は「今年 ÷ 昨年」で、100%を超えれば昨年より増えています。"},{"sheet":{"rows":[["支店","今年","昨年","構成比","前年比"],["東京",600,500,"60%","120%"],["大阪",400,500,"40%","80%"],["合計",1000,"","",""]],"note":"東京の構成比は 600 ÷ 1000 = 60%、前年比は 600 ÷ 500 = 120% です。"}},{"ex":["=B2/$B$8","合計のセル B8 を $ で固定して、下へコピーする"]},{"p":"構成比の数式は、下の行へコピーしても、「合計」のセルだけは動いてほしいセルです。だから $B$8 のように、列と行の両方に $ を付けて固定します（絶対参照）。固定しないと、2行目で B9、3行目で B10 のようにずれてしまいます。"},{"p":"割り算の答えは、0.6 のような小数で出ます。これを「60%」と表示するには、セルの表示形式を「パーセンテージ」にします。Ctrl + Shift + 5 でも、パーセントの表示になります。小数第1位まで見せたいときは、桁数を1にします。"},{"tip":"パーセントの表示にしても、セルの値は 0.6 のままです。表示形式は、見た目だけを変えます。"}],"hints":["構成比は 項目 ÷ 全体の合計、前年比は 今年 ÷ 昨年です。構成比では、合計のセルをコピーしてもずらさないようにします。","割り算の数式と、合計のセルを固定する $（F4キー）、そしてセルの表示形式（パーセント）を使います。","D2：=B2/$B$8（下へコピー）　／　E2：=B2/C2（下へコピー）　／　D2〜E7 を選び、Ctrl + 1 でパーセント（小数第1位）に。"]},{"id":"s5_chart_bar","stage":5,"title":"縦棒グラフを作る","summary":"支店ごとの売上を、縦棒グラフにして、タイトルを付けます。","kind":"task","limit_min":null,"lesson":[{"p":"数字が並んだ表は、グラフにすると、大きさのちがいが一目で分かります。いちばん基本のグラフが「縦棒グラフ」で、項目ごとの量を、棒の高さで比べるのに向いています。"},{"p":"作り方は簡単です。グラフにしたい範囲（項目の列と、数値の列）を選んで、「挿入」タブからグラフの種類を選びます。見出しも一緒に選ぶと、Excelが項目名と数値を自動で見分けてくれます。"},{"sheet":{"rows":[["支店","売上"],["東京",500],["大阪",300],["福岡",400]],"note":"この2列を選んで縦棒グラフにすると、東京・大阪・福岡の3本の棒（高さが 500・300・400）ができます。"}},{"ex":["挿入 → 縦棒/横棒グラフ → 集合縦棒","選んだ範囲から縦棒グラフを作る"]},{"p":"グラフの上には「グラフ タイトル」が出ます。クリックして、「支店別売上」のように、何のグラフかが分かる文字に書き換えましょう。グラフを選ぶと右上に出る「＋」ボタンからも、タイトルなどを追加・削除できます。"},{"tip":"グラフは、元の表の数値を書き換えると、自動で変わります。グラフの位置や大きさは、ドラッグで動かせます。"}],"hints":["支店の名前と売上の数値の、2列を使って、棒の高さで売上を比べるグラフを作ります。","「挿入」タブのグラフのボタンから「縦棒」を選びます。作ったあとで、タイトルを書き換えます。","A1〜B7 を選ぶ →「挿入」→「縦棒/横棒グラフ」→「集合縦棒」→ タイトルを「支店別売上」に書き換える。"]},{"id":"s5_chart_line","stage":5,"title":"折れ線グラフ：推移を見る","summary":"12か月の売上の変化を、折れ線グラフにして、タイトルと縦軸のラベルを付けます。","kind":"task","limit_min":null,"lesson":[{"p":"「折れ線グラフ」は、点を線でつないだグラフです。月ごとの売上のように、時間がたつにつれて数字がどう変わったか（推移）を見るのに向いています。上がっているのか、下がっているのか、どこで急に変わったのかが、線の傾きで分かります。"},{"p":"縦棒グラフとの使い分けは次のとおりです。支店ごとの売上のように、項目どうしの「量」を比べたいときは、棒グラフ。月ごとの売上のように、「時間の流れによる変化」を見たいときは、折れ線グラフです。"},{"sheet":{"rows":[["月","売上"],["1月",300],["2月",350],["3月",280]],"note":"この2列を折れ線グラフにすると、300 → 350 → 280 と、上がって下がる線になります。"}},{"ex":["挿入 → 折れ線/面グラフ → 折れ線","選んだ範囲から折れ線グラフを作る"]},{"p":"グラフには、タイトルのほかに「軸ラベル」を付けられます。軸ラベルは、縦軸や横軸が何を表しているかを書く文字です。グラフを選んで右上の「＋」（グラフ要素）を押し、「軸ラベル」にチェックを入れると出てきます。"},{"tip":"月のように時間の順に並んでいる項目は、折れ線グラフで見ると、変化の流れがつかみやすくなります。"}],"hints":["月ごとの売上の変化（推移）を見たいので、時間の流れを表すのに向いたグラフを選びます。","「挿入」タブの「折れ線/面グラフ」を使います。タイトルと軸ラベルは、グラフ要素（＋）から追加します。","A1〜B13 を選ぶ →「挿入」→「折れ線」→ タイトルを書き換え →「＋」→「軸ラベル」→ 縦軸のラベルを「売上（円）」に。"]},{"id":"s5_test","stage":5,"title":"確認テスト：売上の分析","summary":"ピボットテーブル・条件付き書式・構成比・グラフを組み合わせて、売上を分析します。","kind":"test","limit_min":25,"lesson":[],"hints":[]}]},{"id":6,"title":"実務シミュレーション","desc":"請求書、勤怠、在庫、売上報告など、仕事でよくある書類を、学んだことを組み合わせて仕上げます。","tasks":[{"id":"s6_invoice","stage":6,"title":"請求書を仕上げる","summary":"商品マスタから単価を取り出し、小計・消費税・合計と支払期限を求めて、請求書を完成させます。","kind":"task","limit_min":null,"lesson":[{"p":"請求書は、商品やサービスを売った会社が、買ってくれた会社に「代金を払ってください」とお願いするために送る書類です。経理や営業の人が毎月何十枚も作るので、金額の計算にまちがいがあると、お客さんの信用を失ってしまいます。Excelの数式で計算しておけば、数量を直しても、金額・消費税・合計が自動で正しくなります。"},{"p":"この課題では、これまで学んだことを組み合わせます。①商品コードから単価を「探して取り出す」（XLOOKUP）、②単価 × 数量で金額を出す、③金額を足して小計にする、④消費税は1円未満を切り捨てる（ROUNDDOWN）、⑤支払期限は請求日の「翌月末」にする（EOMONTH）、⑥金額に桁区切りを付ける。新しい操作は出てきません。"},{"sheet":{"rows":[["","金額"],["小計",12345],["消費税（10%）",1234],["合計",13579]],"note":"消費税は 12,345 × 0.1 = 1,234.5 ですが、請求書に「円未満」は書けないので、切り捨てて 1,234 円にします。"}},{"ex":["=ROUNDDOWN(E15*0.1,0)","E15 の10%を、小数点以下を切り捨てて求めます。"]},{"ex":["=EOMONTH(B2,1)","B2 の日付の、翌月の末日。"]},{"tip":"請求書の数値のセルは、ほかの人が見るものです。桁区切りを付けると、ひと目で大きさが分かり、読みまちがいが減ります。"}],"hints":["商品コードと数量だけが入っています。単価は「マスタ」から取り出し、あとは金額 → 小計 → 消費税 → 合計の順に求めます。","単価は XLOOKUP、小計は SUM、消費税の切り捨ては ROUNDDOWN、支払期限は EOMONTH を使います。桁区切りは Ctrl + Shift + 1 です。","B6 は =XLOOKUP(A6,$G$6:$G$15,$H$6:$H$15)（C列は取り出す範囲を $I$ に）。E6 は =C6*D6。E15 は =SUM(E6:E13)。E16 は =ROUNDDOWN(E15*0.1,0)。B3 は =EOMONTH(B2,1)。"]},{"id":"s6_attendance","stage":6,"title":"勤怠の集計","summary":"1か月分の出勤記録から、勤務時間・残業時間・月の合計を求め、土日の行に色を付けます。","kind":"task","limit_min":null,"lesson":[{"p":"勤怠表は、従業員が「何時から何時まで働いたか」を記録する表です。総務や経理の人が、これをもとに毎月の給料（残業代も含む）を計算します。分単位で正確に計算する必要があり、手計算は大変なので、Excelの出番です。"},{"p":"この課題で1つだけ新しい考え方があります。Excelの時刻は、「1日（24時間）を 1」とした数値です。だから、時刻どうしを引き算すると、そのまま「かかった時間」が出ます。12:00 は 0.5（半日）、6:00 は 0.25（1日の4分の1）です。"},{"sheet":{"rows":[["時刻","Excelの中の数値"],["0:00",0],["6:00",0.25],["12:00",0.5],["18:00",0.75],["24:00（翌日の0:00）",1]],"note":"9:00 → 18:00 で休憩 1:00 なら、18:00 − 9:00 − 1:00 = 8:00（8時間）です。"}},{"ex":["=C2-B2-D2","退勤 − 出勤 − 休憩。結果も時刻（時間）の形で表示されます。"]},{"ex":["=MAX(0,E2-8/24)","勤務時間から 8時間（8/24）を引き、マイナスなら 0。8時間を超えた分だけが残ります。"]},{"p":"合計の時間は、1か月で 150時間のように 24時間を超えます。このとき表示形式が h:mm のままだと、24時間ごとに 0 に戻って見えてしまうので、「[h]:mm」という形にします。セルを選んで Ctrl + 1 →「ユーザー定義」の種類の欄に [h]:mm と入力します。"},{"p":"土日の行に色を付けるには、条件付き書式の「数式」を使います。WEEKDAY(日付, 2) は、月曜日を 1、土曜日を 6、日曜日を 7 とした番号を返します。だから =WEEKDAY($A2,2)>=6 と書くと、土日の行だけに色が付きます。"},{"tip":"時刻が思った数字（0.375 など）で表示されたら、表示形式が「標準」になっています。表示形式を時刻にします。"}],"hints":["時刻は「1日を1とする数値」なので、そのまま引き算できます。残業は、8時間を超えた分だけを取り出します。","勤務時間は引き算、残業は MAX（または IF）、合計は SUM を使います。時間の表示形式は [h]:mm、土日の色は条件付き書式の数式と WEEKDAY です。","E2 は =C2-B2-D2、F2 は =MAX(0,E2-8/24)、E22 は =SUM(E2:E21)。条件付き書式は A2〜F21 を選んで、数式 =WEEKDAY($A2,2)>=6。"]},{"id":"s6_inventory","stage":6,"title":"在庫の管理表","summary":"今月の在庫を計算し、足りない商品に「要発注」と表示して色を付け、件数と在庫金額を求めます。","kind":"task","limit_min":null,"lesson":[{"p":"在庫管理表は、お店や倉庫が「どの商品が何個残っているか」を管理する表です。仕入れ担当の人が、毎月これを見て、足りなくなりそうな商品を発注（メーカーや問屋に注文）します。発注を忘れると品切れになり、売り逃しになってしまいます。"},{"p":"この課題では、①今月の在庫を足し算・引き算で求め、②在庫が「発注点」（これを下回ったら注文する、という目安の数）を下回ったら「要発注」と表示し（IF）、③その行に色を付け（条件付き書式）、④要発注の件数を数え（COUNTIF）、⑤在庫金額を求めて合計します。新しい操作は出てきません。"},{"sheet":{"rows":[["商品名","前月在庫","入庫","出庫","発注点","今月在庫","発注"],["ノート",30,10,28,15,12,"要発注"],["付箋",20,0,5,10,15,"OK"]],"note":"ノートは 30 + 10 − 28 = 12 で、発注点 15 を下回っているので「要発注」。付箋は 15 で発注点 10 以上なので「OK」です。"}},{"ex":["=IF(G2<F2,\"要発注\",\"OK\")","今月在庫が発注点より小さければ「要発注」、そうでなければ「OK」。"]},{"ex":["=COUNTIF(H2:H13,\"要発注\")","H列の中で、「要発注」と書かれたセルの数。"]},{"tip":"表に「発注」の列のような判定の列を作っておくと、条件付き書式も COUNTIF も、その列を見るだけで済みます。"}],"hints":["在庫は足し算・引き算で求めます。「要発注」は、在庫と発注点を比べて判定し、その判定の列を使って、色づけと件数を求めます。","判定は IF、件数は COUNTIF、合計は SUM を使います。色づけは条件付き書式の「数式」で、列だけを $ で固定します。","G2 は =C2+D2-E2、H2 は =IF(G2<F2,\"要発注\",\"OK\")、I2 は =B2*G2。B15 は =COUNTIF(H2:H13,\"要発注\")、B16 は =SUM(I2:I13)。条件付き書式の数式は =$H2=\"要発注\"。"]},{"id":"s6_report","stage":6,"title":"月次の売上報告","summary":"1か月の売上データを集計して、支店別の売上・構成比・前月比と、グラフを「報告」シートにまとめます。","kind":"task","limit_min":null,"lesson":[{"p":"会社では、毎月の終わりに、その月の売上を集計して上司や社長に報告します。細かい売上データ（1件ずつの記録）をそのまま見せても全体が分からないので、「支店別にいくら売れたか」「前の月と比べて増えたか」を、1枚の報告シートにまとめます。報告を受ける人は、データの中身よりも、この1枚の表とグラフを見ます。"},{"p":"この課題では、①支店ごとの売上合計を集計し（SUMIFS やピボットテーブル）、②全体の合計と、各支店の割合（構成比）を求め、③前の月と比べた割合（前月比）を求め、④グラフにします。報告のシートは「課題」シートとは別のシートです。別のシートのセルは、シート名を付けて =課題!D2 のように指定します（シートの見出しをクリックして、セルをなぞれば自動で入ります）。"},{"sheet":{"rows":[["支店","今月","前月","前月比"],["東京",1200,1000,"120.0%"],["大阪",800,1000,"80.0%"]],"note":"前月比は 今月 ÷ 前月。100% より大きければ増えた、小さければ減ったことを表します。"}},{"ex":["=SUMIFS(課題!$D$2:$D$61,課題!$B$2:$B$61,A2)","「課題」シートの B列が A2（支店名）と同じ行の、D列（金額）を足します。"]},{"ex":["=B2/D2","今月 ÷ 前月（前月比）。表示形式をパーセントにします。"]},{"tip":"グラフは、グラフにしたい範囲（支店と今月の売上）を選んでから「挿入」タブで作ると、そのシートに作られます。前月の列や合計の行まで選ぶと、棒が増えてしまうので注意します。"}],"hints":["支店ごとの合計は、条件に合う行だけを足す方法（またはピボットテーブル）で求めます。構成比と前月比は、割り算です。","合計は SUMIFS（ピボットテーブルでも可）、構成比は 総合計のセルを $ で固定した割り算、前月比は今月 ÷ 前月です。グラフは「挿入」→ 縦棒。","B2 は =SUMIFS(課題!$D$2:$D$61,課題!$B$2:$B$61,A2)、B6 は =SUM(B2:B5)、C2 は =B2/$B$6、E2 は =B2/D2。A2〜B5 を選んで縦棒グラフ。"]},{"id":"s6_customers","stage":6,"title":"顧客名簿の整理","summary":"取引先から集めた名簿の、重複・表記ゆれ・余分な空白を直して、テーブルにし、都道府県を選べるようにします。","kind":"task","limit_min":null,"lesson":[{"p":"顧客名簿は、取引先やお客さんの名前・住所・電話番号をまとめた表です。営業の人が、案内状を送ったり、電話をかけたりするのに使います。ところが、いろいろな人が集めたデータには、同じ人が二重に入っていたり、「（株）」と「株式会社」が混ざっていたり、名前に余分な空白が入っていたりします。そのまま使うと、同じお客さんに案内が2通届くなどのトラブルになります。"},{"p":"この課題では、データを使える状態に整えます。①重複の削除で、同じ行を1行にする、②置換（Ctrl + H）で、会社名の書き方をそろえる、③TRIM で、氏名の余分な空白を取り除いた列を作る、④テーブル（Ctrl + T）にして、見やすく扱いやすくする、⑤都道府県の列に入力規則（リスト）を付けて、今後の入力の書き方がばらつかないようにする。すべて、これまでに学んだ操作です。"},{"sheet":{"rows":[["会社名","氏名","整えた氏名"],["（株）山田商事"," 佐藤  健","佐藤 健"],["株式会社山田商事","鈴木 誠","鈴木 誠"]],"note":"置換で「（株）」を「株式会社」にそろえ、TRIM で氏名の余分な空白を取り除きます。"}},{"ex":["=TRIM(B2)","B2 の氏名から、前後の空白と、文字の間の余分な空白を取り除きます。"]},{"ex":["Ctrl + H","検索と置換。「（株）」を「株式会社」に、まとめて書き換えます。"]},{"tip":"削除や置換は、あとから元に戻しにくい操作です。まちがえたときは、すぐ Ctrl + Z で戻します。作業の順番は、①重複の削除 → ②置換 → ③TRIM → ④テーブル → ⑤入力規則が安全です。"}],"hints":["まず、同じ行をなくし、表記をそろえ、氏名の余分な空白を取り除きます。そのあと、表の形（テーブル）と、入力のルールを整えます。","「データ」タブの「重複の削除」、Ctrl + H の置換、TRIM 関数、Ctrl + T のテーブル、「データの入力規則」のリストを使います。","重複の削除（4列を基準）→ Ctrl + H で「（株）」→「株式会社」→ E2 に =TRIM(B2) を下へコピー → Ctrl + T で名前を「顧客名簿」に → C列に入力規則（リスト、元の値は G2〜G6）。"]}]},{"id":7,"title":"修了テスト","desc":"これまでの内容をまとめて確かめる、最後のテストです（制限時間60分）。","tasks":[{"id":"s7_final","stage":7,"title":"修了テスト：1か月の売上をまとめる","summary":"XLOOKUP・IF・ROUND・SUMIFS・条件付き書式・並べ替え・ピボットテーブル・グラフを組み合わせて、売上をまとめます。","kind":"test","limit_min":60,"lesson":[],"hints":[]}]}],"typing":[{"title":"なぜ、キーボードを見ずに打つのか","points":["手元を見ながら打つと、「画面 → 手元 → 画面」と目が往復します。この往復が、速さと正確さの両方を下げています。","ブラインドタッチでは、目は画面だけを見ます。打ち間違いにすぐ気づけて、考えることに集中できます。","覚えるのは「どのキーを、どの指で打つか」だけです。指が場所を覚えれば、あとは毎日の練習で自然に速くなります。","最初は今より遅くなります。それで正常です。自己流に戻さず、正しい指で打ち続けることが一番の近道です。"]},{"title":"姿勢と手の置き方","points":["椅子に深く座り、背筋を伸ばします。画面は目線の少し下、顔から40cm以上離します。","肘は90度くらいに曲げ、手首は机やキーボードに押しつけず、軽く浮かせるか軽く置く程度にします。","指は軽く丸めて、卵をそっと持つような形にします。指先でキーに触れます。","キーボードは体の正面に。B のキーがおへその前に来るくらいが目安です。"]},{"title":"ホームポジション：F と J の突起","points":["キーボードの F と J には、小さな突起があります。指先で触って探してみてください。","左手の人差し指を F、右手の人差し指を J に置きます。残りの指は隣のキーへ：左手は D・S・A、右手は K・L・;。","両手の親指は、スペースキーの上に軽く置きます。"]},{"title":"キーごとの担当指","points":["すべてのキーには、打つ指が決まっています。下の図の色が、指の担当です。","各指は、ホームポジションのキーと、その斜め上・斜め下のキーを受け持ちます。人差し指だけは2列ぶん担当します。","今すべてを覚える必要はありません。このあとのステップで、段ごとに少しずつ覚えていきます。"]},{"title":"練習の3つの約束","points":["① 手元を見ない。迷ったら、手元ではなく画面のキーボードを見ます。","② 速さより正確さ。間違えずに打てる速さまで落として打ちます。速さは後から付いてきます。","③ 毎日、短く。1日10〜15分を毎日続けるほうが、週末にまとめて練習するより早く身につきます。"]}],"keyboard":[[["1",0],["2",1],["3",2],["4",3],["5",3],["6",5],["7",5],["8",6],["9",7],["0",8],["-",8]],[["Q",0],["W",1],["E",2],["R",3],["T",3],["Y",5],["U",5],["I",6],["O",7],["P",8],["@",8]],[["A",0],["S",1],["D",2],["F",3],["G",3],["H",5],["J",5],["K",6],["L",7],[";",8],[":",8]],[["Z",0],["X",1],["C",2],["V",3],["B",3],["N",5],["M",5],[",",6],[".",7],["/",8]]],"sets":[{"id":"k1","title":"毎日使う基本の操作"},{"id":"k2","title":"移動と選択"},{"id":"k3","title":"入力と編集"},{"id":"k4","title":"書式と表"},{"id":"k5","title":"ブック・シート・画面"},{"id":"ke","title":"文章編集（メールやWordで使う）"}],"shortcuts":[{"id":"copy","set":"k1","desc":"選択したセルをコピーする","label":"Ctrl + C","note":null},{"id":"paste","set":"k1","desc":"コピーした内容を貼り付ける","label":"Ctrl + V","note":null},{"id":"cut","set":"k1","desc":"選択したセルを切り取る（移動の準備）","label":"Ctrl + X","note":null},{"id":"undo","set":"k1","desc":"直前の操作を元に戻す","label":"Ctrl + Z","note":null},{"id":"redo","set":"k1","desc":"元に戻した操作をやり直す","label":"Ctrl + Y","note":null},{"id":"save","set":"k1","desc":"ブックを上書き保存する","label":"Ctrl + S","note":"こまめに押す習慣を付けます。Excel課題の採点も、この保存がきっかけです。"},{"id":"edit","set":"k1","desc":"セルを編集できる状態にする（中身を書き直す）","label":"F2","note":"ダブルクリックの代わりです。カーソルが文字の末尾に入ります。"},{"id":"selectall","set":"k1","desc":"表全体（またはシート全体）を選択する","label":"Ctrl + A","note":null},{"id":"find","set":"k1","desc":"文字や数値を検索する","label":"Ctrl + F","note":null},{"id":"cancel","set":"k1","desc":"入力中の内容を取り消して、元の値に戻す","label":"Esc","note":null},{"id":"newline","set":"k1","desc":"セルの中で改行する","label":"Alt + Enter","note":"Enter だけだと、入力が確定して下のセルへ移動します。"},{"id":"repeat","set":"k1","desc":"直前の操作（色付け、行の挿入など）をもう一度繰り返す","label":"F4","note":null},{"id":"enddown","set":"k2","desc":"データが入っている範囲の、いちばん下まで移動する","label":"Ctrl + ↓","note":null},{"id":"endright","set":"k2","desc":"データが入っている範囲の、右端まで移動する","label":"Ctrl + →","note":null},{"id":"selright1","set":"k2","desc":"選択範囲を右へ1セル広げる","label":"Shift + →","note":null},{"id":"seldown","set":"k2","desc":"いまのセルから、データのいちばん下までを選択する","label":"Ctrl + Shift + ↓","note":"「Ctrl＋矢印＝端まで移動」に Shift を足すと「端まで選択」になります。"},{"id":"selright","set":"k2","desc":"いまのセルから、データの右端までを選択する","label":"Ctrl + Shift + →","note":null},{"id":"home","set":"k2","desc":"いまの行の先頭（A列）へ移動する","label":"Home","note":null},{"id":"a1","set":"k2","desc":"シートの先頭（セルA1）へ移動する","label":"Ctrl + Home","note":null},{"id":"lastcell","set":"k2","desc":"データが入っている最後のセル（右下の端）へ移動する","label":"Ctrl + End","note":null},{"id":"selcol","set":"k2","desc":"いまのセルがある列全体を選択する","label":"Ctrl + Space","note":null},{"id":"selrow","set":"k2","desc":"いまのセルがある行全体を選択する","label":"Shift + Space","note":"日本語入力がオンだと効きません。半角/全角キーでオフにしてから押します。"},{"id":"tab","set":"k2","desc":"入力を確定して、右のセルへ移動する","label":"Tab","note":null},{"id":"shiftenter","set":"k2","desc":"入力を確定して、上のセルへ移動する","label":"Shift + Enter","note":null},{"id":"nextsheet","set":"k2","desc":"右隣のシートに切り替える","label":"Ctrl + PageDown","note":null},{"id":"prevsheet","set":"k2","desc":"左隣のシートに切り替える","label":"Ctrl + PageUp","note":null},{"id":"filldown","set":"k3","desc":"すぐ上のセルの内容（数式も）を、いまのセルにコピーする","label":"Ctrl + D","note":"D は Down（下へ）の意味です。"},{"id":"fillright","set":"k3","desc":"すぐ左のセルの内容（数式も）を、いまのセルにコピーする","label":"Ctrl + R","note":"R は Right（右へ）の意味です。"},{"id":"ctrlenter","set":"k3","desc":"選択している複数のセルに、同じ内容を一度に入力する","label":"Ctrl + Enter","note":null},{"id":"today","set":"k3","desc":"今日の日付を入力する","label":"Ctrl + ;","note":null},{"id":"now","set":"k3","desc":"現在の時刻を入力する","label":"Ctrl + :","note":null},{"id":"abs","set":"k3","desc":"数式の入力中に、セル参照を絶対参照（$A$1）に切り替える","label":"F4","note":"押すたびに $A$1 → A$1 → $A1 → A1 と切り替わります。"},{"id":"autosum","set":"k3","desc":"合計（SUM関数）を自動で入力する","label":"Alt + Shift + =","note":"日本語キーボードでは「=」は Shift ＋「-」（ほ）のキーです。"},{"id":"insert","set":"k3","desc":"行・列・セルを挿入する","label":"Ctrl + Shift + +","note":"日本語キーボードでは「+」は Shift ＋「;」（れ）のキーです。テンキーの + なら Ctrl だけで押せます。"},{"id":"delete","set":"k3","desc":"行・列・セルを削除する","label":"Ctrl + -","note":null},{"id":"clear","set":"k3","desc":"選択したセルの中身を消す（書式は残す）","label":"Delete","note":null},{"id":"pastespecial","set":"k3","desc":"「形式を選択して貼り付け」の画面を開く","label":"Ctrl + Alt + V","note":null},{"id":"pastevalue","set":"k3","desc":"値だけを貼り付ける（数式や書式は貼り付けない）","label":"Ctrl + Shift + V","note":null},{"id":"replace","set":"k3","desc":"文字や数値を、別の内容に置換する","label":"Ctrl + H","note":null},{"id":"flashfill","set":"k3","desc":"フラッシュフィル（入力例をもとに、残りを自動で埋める）","label":"Ctrl + E","note":null},{"id":"dropdown","set":"k3","desc":"入力候補のリスト（ドロップダウン）を開く","label":"Alt + ↓","note":null},{"id":"format","set":"k4","desc":"「セルの書式設定」の画面を開く","label":"Ctrl + 1","note":"上の段の 1 を使います（テンキーの 1 では開きません）。"},{"id":"bold","set":"k4","desc":"文字を太字にする","label":"Ctrl + B","note":null},{"id":"comma","set":"k4","desc":"数値を桁区切り（1,234）の表示にする","label":"Ctrl + Shift + 1","note":null},{"id":"date","set":"k4","desc":"日付の表示形式にする","label":"Ctrl + Shift + 3","note":null},{"id":"percent","set":"k4","desc":"パーセント（%）の表示にする","label":"Ctrl + Shift + 5","note":null},{"id":"border","set":"k4","desc":"選択範囲に外枠の罫線を引く","label":"Ctrl + Shift + 6","note":null},{"id":"filter","set":"k4","desc":"フィルター（見出しの▼ボタン）を付ける／外す","label":"Ctrl + Shift + L","note":null},{"id":"table","set":"k4","desc":"表を「テーブル」に変換する","label":"Ctrl + T","note":null},{"id":"autofit","set":"k4","desc":"列の幅を、文字の長さに合わせて自動調整する","label":"Alt → H → O → I","note":"同時押しではなく、1つずつ順番に押します。Alt を押すとリボンにキーの案内が出ます。"},{"id":"hiderow","set":"k4","desc":"選択した行を非表示にする","label":"Ctrl + 9","note":null},{"id":"hidecol","set":"k4","desc":"選択した列を非表示にする","label":"Ctrl + 0","note":null},{"id":"new","set":"k5","desc":"新しいブックを作る","label":"Ctrl + N","note":null},{"id":"open","set":"k5","desc":"ブックを開く画面を出す","label":"Ctrl + O","note":null},{"id":"close","set":"k5","desc":"いまのブックを閉じる","label":"Ctrl + W","note":null},{"id":"print","set":"k5","desc":"印刷の画面を開く","label":"Ctrl + P","note":null},{"id":"saveas","set":"k5","desc":"名前を付けて保存する","label":"F12","note":null},{"id":"newsheet","set":"k5","desc":"新しいシートを追加する","label":"Shift + F11","note":null},{"id":"showformula","set":"k5","desc":"シート上の数式を、結果ではなく数式のまま表示する（もう一度押すと戻る）","label":"Ctrl + Shift + @","note":null},{"id":"goto","set":"k5","desc":"「ジャンプ」の画面を開く（指定したセルへ移動する）","label":"Ctrl + G","note":"F5 でも開きます。"},{"id":"fx","set":"k5","desc":"「関数の挿入」の画面を開く","label":"Shift + F3","note":null},{"id":"chart","set":"k5","desc":"選択したデータから、すぐにグラフを作る","label":"Alt + F1","note":null},{"id":"note","set":"k5","desc":"セルにメモを追加する","label":"Shift + F2","note":null},{"id":"switchapp","set":"k5","desc":"開いている別のアプリ（ウィンドウ）に切り替える","label":"Alt + Tab","note":null},{"id":"e_wordright","set":"ke","desc":"カーソルを、単語1つぶん右へ移動する","label":"Ctrl + →","note":null},{"id":"e_wordleft","set":"ke","desc":"カーソルを、単語1つぶん左へ移動する","label":"Ctrl + ←","note":null},{"id":"e_home","set":"ke","desc":"カーソルを行の先頭へ移動する","label":"Home","note":null},{"id":"e_end","set":"ke","desc":"カーソルを行の末尾へ移動する","label":"End","note":null},{"id":"e_selchar","set":"ke","desc":"カーソルの右の1文字を選択する","label":"Shift + →","note":null},{"id":"e_selword","set":"ke","desc":"カーソルの右の単語1つを選択する","label":"Ctrl + Shift + →","note":null},{"id":"e_selend","set":"ke","desc":"カーソルから行の末尾までを選択する","label":"Shift + End","note":null},{"id":"e_selhome","set":"ke","desc":"カーソルから行の先頭までを選択する","label":"Shift + Home","note":null},{"id":"e_delword","set":"ke","desc":"カーソルの左の単語を、まとめて削除する","label":"Ctrl + Backspace","note":null},{"id":"e_delwordr","set":"ke","desc":"カーソルの右の単語を、まとめて削除する","label":"Ctrl + Delete","note":null},{"id":"e_top","set":"ke","desc":"文書の先頭へ移動する","label":"Ctrl + Home","note":null},{"id":"e_bottom","set":"ke","desc":"文書の末尾へ移動する","label":"Ctrl + End","note":null},{"id":"e_all","set":"ke","desc":"文書全体を選択する","label":"Ctrl + A","note":null},{"id":"e_plain","set":"ke","desc":"書式を付けずに、文字だけを貼り付ける","label":"Ctrl + Shift + V","note":null}],"quiz":[{"topic":"画面とセル","q":"Excelで、表の1つひとつのマスを何といいますか？","choices":["シート","セル","ブック","ページ"],"answer":1,"explain":"表の1つひとつのマスは「セル」です。セルが縦横に並んだものが「シート」、シートをまとめたファイルが「ブック」です。"},{"topic":"画面とセル","q":"「B3」のように、列の記号と行の番号で表す場所の名前は？","choices":["シート名","ブック名","列幅","セル番地"],"answer":3,"explain":"「B3」は、B列の3行目にあるセルを表します。このように場所を表す書き方を「セル番地」といいます。"},{"topic":"画面とセル","q":"数式バーの左にあり、選んでいるセルの番地が出る欄の名前は？","choices":["名前ボックス","タイトルバー","ステータスバー","シートタブ"],"answer":0,"explain":"数式バーの左側にある欄が「名前ボックス」です。今選んでいるセルの番地が表示され、ここに番地を入力して移動することもできます。"},{"topic":"画面とセル","q":"縦横にセルが並んだ、1枚の作業用の紙を何といいますか？","choices":["ブック","セル","シート","行"],"answer":2,"explain":"シートはセルが並んだ1枚の作業用の紙です。シートが複数集まったExcelのファイル全体を「ブック」と呼びます。"},{"topic":"画面とセル","q":"Excelで保存される、ファイル全体のことを何と呼びますか？","choices":["シート","ブック","セル","列"],"answer":1,"explain":"保存する1つのファイルを「ブック」と呼びます。ブックの中には、シートが1枚以上入っています。"},{"topic":"画面とセル","q":"縦の並びで、A、B、Cのように英字で呼ばれるものは何ですか？","choices":["行","シート","ブック","列"],"answer":3,"explain":"縦の並びは「列」で、A、B、Cと英字で呼ばれます。横の並びは「行」で、1、2、3と数字で呼ばれます。"},{"topic":"入力と修正","q":"セルに文字を入力してEnterを押すと、選ばれるセルは？","choices":["1つ下のセル","1つ右のセル","同じセルのまま","1つ左のセル"],"answer":0,"explain":"Enterで入力を確定すると、選択は1つ下に移ります。右に移るのはTabキーです。"},{"topic":"入力と修正","q":"セルの中身を消さずに、一部の文字だけ直したいときに使うキーは？","choices":["F5","F12","F2","F8"],"answer":2,"explain":"F2キーを押すと、セルの中で文字を編集できます。セルの中身を全部消さずに直したいときに便利です。"},{"topic":"入力と修正","q":"選んだセルの文字や数式を消すキーは？","choices":["Esc","Delete","Enter","Tab"],"answer":1,"explain":"Deleteキーで、選んだセルの中身を消せます。セルそのものが消えるわけではなく、中身が空になります。"},{"topic":"入力と修正","q":"直前に行った操作を取り消すショートカットは？","choices":["Ctrl+S","Ctrl+C","Ctrl+B","Ctrl+Z"],"answer":3,"explain":"Ctrl+Zは、直前の操作を取り消す（元に戻す）ショートカットです。Ctrl+Sは保存、Ctrl+Cはコピーです。"},{"topic":"入力と修正","q":"1つのセルの中で文字を改行したいとき、押すキーは？","choices":["Alt+Enter","Enter","Shift+Tab","Esc"],"answer":0,"explain":"セル内で改行するにはAlt+Enterです。Enterだけだと入力が確定し、下のセルに移ってしまいます。"},{"topic":"入力と修正","q":"作ったファイルを上書き保存するショートカットは？","choices":["Ctrl+P","Ctrl+N","Ctrl+S","Ctrl+A"],"answer":2,"explain":"Ctrl+Sは上書き保存です。Ctrl+Pは印刷、Ctrl+Nは新しいブック、Ctrl+Aはすべて選択のショートカットです。"},{"topic":"数式の基本","q":"数式を入力するとき、最初に付ける記号は？","choices":["#","=","*","&"],"answer":1,"explain":"数式は「=」で始めます。「=」を付けないと、計算されずに文字として扱われてしまいます。"},{"topic":"数式の基本","q":"A1が10、B1が3のとき、=A1*B1+2 の結果は？","choices":["36","50","24","32"],"answer":3,"explain":"掛け算は足し算より先に計算されます。10×3=30、30+2=32です。"},{"topic":"数式の基本","q":"A1が10、B1が3のとき、=(A1+B1)*2 の結果は？","choices":["26","16","20","23"],"answer":0,"explain":"かっこの中が先に計算されます。(10+3)=13、13×2=26です。"},{"topic":"数式の基本","q":"数式でセルを参照（A1などと書く）する一番の利点は？","choices":["数式が文字として表示され続ける","計算結果の表示形式が自動で決まる","参照先の値を変えると、結果も自動で変わる","数式を入力しなくても計算される"],"answer":2,"explain":"セルを参照すると、参照先の数値を直すだけで結果も自動で更新されます。数値を直接書くより、修正がしやすくなります。"},{"topic":"数式の基本","q":"数式の結果に「#DIV/0!」と出ました。主な原因は？","choices":["数式の書き方が間違っている","0で割り算をしている","文字と数字を足している","セルの幅が狭すぎる"],"answer":1,"explain":"#DIV/0!は、0で割り算をしたときに出るエラーです。割る数のセルが空や0になっていないか確認しましょう。"},{"topic":"数式の基本","q":"割り算と掛け算の記号の組み合わせとして正しいのは？","choices":["割り算は x 、掛け算は /","割り算は % 、掛け算は ×","割り算は : 、掛け算は +","割り算は / 、掛け算は *"],"answer":3,"explain":"Excelでは割り算は「/」（スラッシュ）、掛け算は「*」（アスタリスク）で書きます。文字のxや×は使えません。"},{"topic":"コピーと参照","q":"セルの右下の小さな四角（フィルハンドル）を下や右へドラッグすると、どうなりますか？","choices":["同じ内容や連続した値がコピーされる","セルの中身がすべて消える","シートが新しく1枚増える","セルどうしが結合される"],"answer":0,"explain":"フィルハンドルをドラッグすると、数式や数字を連続して入力できます。数式は位置に合わせて参照先がずれながらコピーされます。"},{"topic":"コピーと参照","q":"C1に =A1+B1 と入れ、C2へコピーしました。C2の数式はどうなりますか？","choices":["=A1+B1 のまま","=C1+C2","=A2+B2","数式が消える"],"answer":2,"explain":"相対参照は、コピー先の位置に合わせて参照先もずれます。1行下にコピーすると、A1とB1が1行下のA2とB2になります。"},{"topic":"コピーと参照","q":"数式で $A$1 と書いたとき、その意味は？","choices":["コピーすると参照先が1つずれる","コピーしても参照先が常に A1 のまま","数式の計算が行われなくなる","列だけが固定される"],"answer":1,"explain":"$（ドル記号）を列と行の前に付けると絶対参照になります。コピーしても参照先は A1 のまま変わりません。"},{"topic":"コピーと参照","q":"数式を編集中、参照にカーソルを置いて F4 キーを押すと、どうなりますか？","choices":["数式が保存されてシートが閉じる","セルの色が自動で変わる","選んだ範囲がすべて消える","参照の $ の付け方が順番に切り替わる"],"answer":3,"explain":"F4を押すと、A1→$A$1→A$1→$A1の順に切り替わります。どの参照の形にするかを素早く選べます。"},{"topic":"コピーと参照","q":"$A1 の説明として正しいものは？","choices":["列（A）だけ固定され、行は変わる","行（1）だけ固定され、列は変わる","列も行も固定される","どちらも変わる"],"answer":0,"explain":"$A1は列だけを固定する複合参照です。右にコピーしても A のまま、下にコピーすると行番号が1つずつ変わります。"},{"topic":"コピーと参照","q":"消費税率をB1に入れ、各行の計算式で同じB1を使い続けたいです。正しい書き方は？","choices":["=A2*B1","=A2*B2","=A2*$B$1","=A2*1"],"answer":2,"explain":"$B$1と書くと、コピーしても参照先がB1のまま固定されます。全行で同じ税率を使うときに便利です。"},{"topic":"基本の関数","q":"=SUM(B2:B10) の意味として正しいものは？","choices":["B2とB10の2つのセルだけを足す","B2からB10までの数値をすべて足す","B2からB10の数を1つずつ数える","B2のセルの値を10倍する"],"answer":1,"explain":"SUMは合計を求める関数です。B2:B10のコロン（:）は「から」の意味で、B2からB10までの範囲をまとめて指定します。"},{"topic":"基本の関数","q":"B1からB4に 2、4、6、8 が入っています。=AVERAGE(B1:B4) の結果は？","choices":["4","6","20","5"],"answer":3,"explain":"AVERAGEは平均を求めます。合計は2+4+6+8で20、それを個数の4で割って5です。"},{"topic":"基本の関数","q":"C1からC5の中で一番大きい数を求める関数は？","choices":["MAX","MIN","COUNT","ROUND"],"answer":0,"explain":"MAXは最大値、MINは最小値を求める関数です。英語のmaximum（最大）とminimum（最小）の略と覚えましょう。"},{"topic":"基本の関数","q":"A1からA4に「りんご」「10」、空白、「みかん」の順で入っています。=COUNTA(A1:A4) の結果は？","choices":["1","2","3","4"],"answer":2,"explain":"COUNTAは空白でないセルを、文字も数字も含めて数えます。ここでは3つです。数値だけを数えるのはCOUNTです。"},{"topic":"基本の関数","q":"=ROUND(3.14159, 2) の結果は？","choices":["3.1","3.14","3.15","3"],"answer":1,"explain":"ROUNDは指定した桁数で四捨五入する関数です。2は小数点以下2桁という意味で、3.14になります。"},{"topic":"基本の関数","q":"IF関数の3つの引数の順番として正しいものは？","choices":["正しいとき、条件、違うとき","条件、範囲、合計","範囲、条件、正しいとき","条件、正しいとき、違うとき"],"answer":3,"explain":"IFは「条件を満たすとき何を表示するか」「満たさないとき何を表示するか」を決める関数です。順番は条件・正しいとき・違うときです。"},{"topic":"実務の関数","q":"A2:A10の中で「未払い」と入力されたセルの数を数える関数は？","choices":["COUNTIF","SUMIF","AVERAGE","LEFT"],"answer":0,"explain":"COUNTIFは、条件に合うセルの個数を数える関数です。=COUNTIF(範囲,条件)の形で書きます。"},{"topic":"実務の関数","q":"=SUMIF(A2:A10,\"東京\",C2:C10) の意味として正しいものは？","choices":["A列の「東京」の件数を数える","C列の中の最大値を求める","A列が「東京」の行の、C列の数値を合計する","A列とC列の文字をつなげる"],"answer":2,"explain":"SUMIFは、条件に合う行だけ別の列の数値を合計します。ここでは、A列が「東京」の行のC列の数値を足します。"},{"topic":"実務の関数","q":"VLOOKUP関数の最後の引数をFALSEにする理由は？","choices":["探した結果を空欄にするため","探す値と完全に一致するものだけを探すため","列を左右に入れ替えるため","エラーを表示させないため"],"answer":1,"explain":"最後の引数をFALSEにすると、探す値と完全に一致する行だけを探します。近い値で誤って答えが出るのを防げます。"},{"topic":"実務の関数","q":"IFERROR(値, 代わりの値) の役割は？","choices":["エラーの原因を一覧にして表示する","数式の間違いを自動で直す","エラーのセルの色を消す","数式がエラーになったとき、代わりの値を表示する"],"answer":3,"explain":"IFERRORは、エラーが出たときに指定した別の値を表示します。代わりの値を空白にすると、#DIV/0!などを隠せます。"},{"topic":"実務の関数","q":"A1に「りんご」、B1に「ジュース」が入っています。=A1&B1 の結果は？","choices":["りんごジュース","りんご ジュース","ジュースりんご","りんご&ジュース"],"answer":0,"explain":"&は文字と文字をつなげる記号です。空白は入らないので「りんごジュース」になります。"},{"topic":"実務の関数","q":"A1に「ABC123」が入っています。=LEFT(A1,3) の結果は？","choices":["ABC1","123","ABC","BC1"],"answer":2,"explain":"LEFT(文字, 文字数)は、左から指定した文字数を取り出す関数です。3文字なので「ABC」になります。"},{"topic":"書式と表示形式","q":"A1に0.5を入れ、表示形式をパーセントにすると50%と表示されます。A1の値は？","choices":["50に変わる","0.5のまま変わらない","50%という文字に変わる","5に変わる"],"answer":1,"explain":"表示形式は見た目だけを変える機能です。中の値は0.5のままで、計算にもその値が使われます。"},{"topic":"書式と表示形式","q":"0.25を表示形式「パーセント」にすると、表示は？","choices":["0.25%","2.5%","250%","25%"],"answer":3,"explain":"パーセント表示では値に100を掛けて%を付けて表示します。0.25は25%と表示されます。"},{"topic":"書式と表示形式","q":"表示形式の「桁区切り（,）」の役割は？","choices":["3桁ごとにカンマを付けて読みやすくする","小数点以下を切り捨てる","文字を数値に変換する","セルの背景色を変える"],"answer":0,"explain":"1234567を1,234,567のように3桁ごとに区切って見やすくします。値そのものは変わりません。"},{"topic":"書式と表示形式","q":"Excelは日付をどのような値として管理していますか？","choices":["日付だけの文字データ","ブックの名前","日付を表す数値（シリアル値）","セル番地"],"answer":2,"explain":"Excelは「1900年1月1日＝1」から数えた数値で日付を管理します。表示形式を変えると、同じ数値を日付の形で表示できます。"},{"topic":"書式と表示形式","q":"選んだセルの文字を太字にするショートカットは？","choices":["Ctrl+I","Ctrl+B","Ctrl+U","Ctrl+P"],"answer":1,"explain":"Ctrl+Bで太字になります。Ctrl+Iは斜体、Ctrl+Uは下線のショートカットです。"},{"topic":"書式と表示形式","q":"列の幅を中身に合わせて自動で広げるには、どうしますか？","choices":["セルを1回クリックする","Deleteキーを押す","Escキーを押す","列見出しの右の境目をダブルクリックする"],"answer":3,"explain":"列見出しの右側の境目をダブルクリックすると、最も長い内容に合わせて列幅が自動で調整されます。"},{"topic":"データの整理と集計","q":"「名前」列だけを選んで並べ替えると、どうなりますか？","choices":["他の列とのつながりが崩れ、行がずれてしまう","表全体が自動で並び替わる","並べ替えはできなくなる","表がコピーされ、新しいシートが1枚増える"],"answer":0,"explain":"列だけを選んで並べ替えると、ほかの列の値が元の行に残り、行の対応がずれます。並べ替えは表全体を選んでから行うと安全です。"},{"topic":"データの整理と集計","q":"表の中のセルを選んで Ctrl+T を押すと作られるものは？","choices":["ピボットテーブル","グラフ","テーブル","ハイパーリンク"],"answer":2,"explain":"Ctrl+Tで表をテーブルに変えられます。見出しの矢印から並べ替えやフィルターが使え、表の範囲も自動で広がります。"},{"topic":"データの整理と集計","q":"ピボットテーブルの「値」エリアに入れるものは？","choices":["分類に使う項目（商品名など）","集計したい数値（売上など）","並べ替えの順番","セルの背景色"],"answer":1,"explain":"値エリアには、合計や平均を出したい数値を入れます。商品名などで分ける項目は、行や列のエリアに入れます。"},{"topic":"データの整理と集計","q":"特定の条件を満たすセルだけ色を変えるなど、見た目を自動で変える機能は？","choices":["データの入力規則","ウィンドウ枠の固定","ブックの保護","条件付き書式"],"answer":3,"explain":"条件付き書式では「100以上なら赤」などの条件を決め、該当するセルの色などを自動で変えられます。ホームタブから設定できます。"},{"topic":"データの整理と集計","q":"月ごとの売上の増減、つまり推移を見るのに向いているグラフは？","choices":["折れ線グラフ","円グラフ","ドーナツグラフ","レーダーグラフ"],"answer":0,"explain":"時間の流れに沿った変化（推移）は、折れ線グラフで見ると分かりやすいです。"},{"topic":"データの整理と集計","q":"全体に対して各項目が何%を占めるかを見せたいときのグラフは？","choices":["棒グラフ","折れ線グラフ","円グラフ","散布図"],"answer":2,"explain":"全体を100%としたときの割合を見せるには円グラフが向いています。項目同士の大きさの比較は棒グラフが向いています。"}],"topics":["画面とセル","入力と修正","数式の基本","コピーと参照","基本の関数","実務の関数","書式と表示形式","データの整理と集計"]}</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const FINGERS = ['左手の小指', '左手の薬指', '左手の中指', '左手の人差し指', '親指', '右手の人差し指', '右手の中指', '右手の薬指', '右手の小指'];
+  const app = document.getElementById('app');
+
+  // ---- 端末に残す記録（読んだ解説・覚えたカード・クイズの成績）。使えない環境でもページは動く ----
+  const KEY = 'pocket-notes-v1';
+  let store = { read: {}, known: {}, quiz: {}, last: null };
+  try { store = Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* 保存できない環境 */ }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* 保存できない環境 */ } };
+
+  // ---- 表示の明るさ ----
+  const themeBtn = document.getElementById('theme');
+  const themes = [null, 'light', 'dark'];
+  const themeName = { null: '自動', light: '明るい', dark: '暗い' };
+  let theme = null;
+  try { theme = localStorage.getItem(KEY + '-theme'); } catch (e) { theme = null; }
+  const applyTheme = () => {
+    if (theme) document.documentElement.setAttribute('data-theme', theme); else document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '表示：' + themeName[theme];
+  };
+  themeBtn.addEventListener('click', () => {
+    theme = themes[(themes.indexOf(theme) + 1) % 3];
+    try { if (theme) localStorage.setItem(KEY + '-theme', theme); else localStorage.removeItem(KEY + '-theme'); } catch (e) { /* 無視 */ }
+    applyTheme();
+  });
+  applyTheme();
+
+  // ---- 小道具 ----
+  const h = (tag, attrs, ...kids) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : String(k));
+    return e;
+  };
+  const colName = (i) => String.fromCharCode(65 + i);
+  const shuffle = (a) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const fmtNum = (v) => (typeof v === 'number' ? v.toLocaleString('ja-JP', { maximumFractionDigits: 4 }) : v);
+  const lessonsRead = () => D.stages.reduce((n, s) => n + s.tasks.filter((t) => store.read[t.id]).length, 0);
+  const lessonsTotal = D.stages.reduce((n, s) => n + s.tasks.filter((t) => t.lesson.length).length, 0);
+  const knownCount = () => D.shortcuts.filter((c) => store.known[c.id]).length;
+
+  // ---- 画面の切り替え（#home など。シート見出しの形のメニュー） ----
+  const TABS = [
+    { id: 'home', label: 'ホーム', ab: 'Sheet1' },
+    { id: 'typing', label: 'タイピング', ab: 'Sheet2' },
+    { id: 'excel', label: 'Excel', ab: 'Sheet3' },
+    { id: 'keys', label: 'ショートカット', ab: 'Sheet4' },
+    { id: 'quiz', label: 'クイズ', ab: 'Sheet5' },
+  ];
+  const tabsEl = document.getElementById('tabs');
+  TABS.forEach((t) => tabsEl.append(h('a', { class: 'tab', href: '#' + t.id, 'data-tab': t.id }, h('span', { class: 'ab' }, t.ab), t.label)));
+  const setHead = (tab, crumb, cell) => {
+    document.getElementById('crumb').textContent = crumb;
+    document.getElementById('namebox').textContent = cell;
+    tabsEl.querySelectorAll('.tab').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  };
+  const go = (hash) => { if (location.hash === '#' + hash) route(); else location.hash = hash; };
+
+  function route() {
+    const hash = location.hash.slice(1) || 'home';
+    app.textContent = '';
+    window.scrollTo(0, 0);
+    let m;
+    if (hash === 'typing') viewTyping();
+    else if (hash === 'finger-quiz') viewFingerQuiz();
+    else if (hash === 'excel') viewExcel();
+    else if ((m = hash.match(/^stage-(\d+)$/))) viewStage(+m[1]);
+    else if ((m = hash.match(/^lesson-([a-z0-9-]+)$/))) viewLesson(m[1].replace(/-/g, '_'));
+    else if (hash === 'keys') viewKeys();
+    else if (hash === 'quiz') viewQuiz();
+    else viewHome();
+  }
+  window.addEventListener('hashchange', route);
+
+  // ---- ホーム ----
+  function nextLesson() {
+    for (const s of D.stages) for (const t of s.tasks) if (t.lesson.length && !store.read[t.id]) return t;
+    return null;
+  }
+  function viewHome() {
+    setHead('home', 'ホーム', 'A1');
+    const nl = nextLesson();
+    const quizDone = Object.keys(store.quiz).length;
+    const page = h('section', { class: 'page' },
+      h('div', { class: 'stack' },
+        h('p', { class: 'eyebrow' }, 'すきま時間の予習帳'),
+        h('h1', null, 'ポケット基礎ノート'),
+        h('p', { class: 'lead' }, 'パソコンに向かう前に、スマホで基礎を読んでおくためのノートです。'
+          + 'Excel課題の解説と同じ内容を、1つ3分ほどで読めます。読んだ記録は、この端末のブラウザに残ります。')),
+      nl ? h('div', { class: 'next' },
+        h('p', { class: 'eyebrow' }, '次に読む'),
+        h('h3', null, nl.title),
+        h('p', { class: 'note' }, `第${nl.stage}段階 ${D.stages.find((s) => s.id === nl.stage).title}`),
+        h('a', { class: 'btn primary', href: '#lesson-' + nl.id.replace(/_/g, '-') }, '読む'))
+        : h('div', { class: 'next' }, h('h3', null, 'Excelの解説はすべて読みました'), h('p', { class: 'note' }, 'クイズとショートカットで、覚えたかを確かめましょう。')),
+      h('div', { class: 'tiles' },
+        tile('#typing', 'B2', 'タイピングの基本', '姿勢、ホームポジション、指の担当。指当てクイズ付き。'),
+        tile('#excel', 'C2', 'Excelの読みもの', `読んだ解説 ${lessonsRead()} / ${lessonsTotal}`),
+        tile('#keys', 'D2', 'ショートカット', `覚えた ${knownCount()} / ${D.shortcuts.length}`),
+        tile('#quiz', 'E2', '基礎の4択クイズ', quizDone ? `挑戦した分野 ${quizDone} / ${D.topics.length}` : `${D.quiz.length}問・分野ごとに挑戦`)),
+      h('div', { class: 'stack' },
+        h('h3', null, 'おすすめの使い方'),
+        h('div', { class: 'list' },
+          step('1', '通勤や休憩に1つ読む', '「次に読む」の解説を1つ。例の表を目で追って、数式の形をつかみます。'),
+          step('2', '寝る前に5分', 'ショートカットのカードを10枚、または4択クイズを1回。'),
+          step('3', 'パソコンで手を動かす', '読んだ課題を、ツールで実際に解きます。読むだけでは身につきません。')))
+    );
+    app.append(page);
+  }
+  const tile = (href, addr, title, sub) => h('a', { class: 'tile', href }, h('span', { class: 'addr' }, addr), h('b', null, title), h('span', null, sub));
+  const step = (no, title, sub) => h('div', { class: 'row' }, h('span', { class: 'no' }, no), h('span', { class: 't' }, h('b', null, title), h('span', null, sub)), h('span'));
+
+  // ---- タイピング ----
+  function keyboard() {
+    const kb = h('div', { class: 'kb', role: 'img', 'aria-label': '指の担当ごとに色分けしたキーボード' });
+    D.keyboard.forEach((row, ri) => {
+      const r = h('div', { class: 'r', style: `padding-left:${[0, 14, 22, 36][ri]}px` });
+      row.forEach(([label, f]) => r.append(h('span', { class: `k f${f}${'ASDFJKL;'.includes(label) ? ' home' : ''}` }, label)));
+      kb.append(r);
+    });
+    const legend = h('div', { class: 'legend' });
+    [0, 1, 2, 3, 5, 6, 7, 8].forEach((f) => legend.append(h('span', null, h('i', { class: 'f' + f }), FINGERS[f])));
+    return h('div', { class: 'stack' }, kb, legend);
+  }
+  function viewTyping() {
+    setHead('typing', 'タイピングの基本', 'B2');
+    const page = h('section', { class: 'page' },
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, 'Sheet2'), h('h1', null, 'タイピングの基本'),
+        h('p', { class: 'lead' }, 'キーボードを見ずに打つ「ブラインドタッチ」の考え方です。練習はパソコンのツールで行います。')));
+    D.typing.forEach((s, i) => {
+      const sec = h('div', { class: 'stack' }, h('h2', null, `${i + 1}. ${s.title}`), h('div', { class: 'lesson' }, s.points.map((p) => h('p', null, p))));
+      if (s.title.includes('担当指')) sec.append(keyboard());
+      page.append(sec);
+    });
+    page.append(h('div', { class: 'next' },
+      h('h3', null, '指の担当を覚えたか確かめる'),
+      h('p', { class: 'note' }, 'キーが1つ出るので、打つ指を選びます。10問です。'),
+      h('a', { class: 'btn primary', href: '#finger-quiz' }, '指当てクイズ')));
+    app.append(page);
+  }
+  function viewFingerQuiz() {
+    setHead('typing', '指当てクイズ', 'B3');
+    const pool = [];
+    D.keyboard.forEach((row) => row.forEach(([label, f]) => { if (/^[A-Z;,./]$/.test(label)) pool.push([label, f]); }));
+    const qs = shuffle(pool).slice(0, 10);
+    let i = 0; let ok = 0;
+    const page = h('section', { class: 'page' });
+    app.append(page);
+    const show = () => {
+      page.textContent = '';
+      if (i >= qs.length) {
+        page.append(h('div', { class: 'card' }, h('p', { class: 'eyebrow' }, '結果'), h('div', { class: 'score' }, `${ok} / ${qs.length}`),
+          h('p', null, ok >= 9 ? 'よく覚えています。パソコンの練習でも、この指で打ちましょう。' : '色の付いたキーボードの図を見直してから、もう一度挑戦しましょう。'),
+          h('div', { class: 'btns' }, h('button', { class: 'btn primary', type: 'button', onclick: () => go('finger-quiz') }, 'もう一度'),
+            h('a', { class: 'btn', href: '#typing' }, '図を見直す'))));
+        return;
+      }
+      const [label, f] = qs[i];
+      const fb = h('div', { class: 'feedback', hidden: true });
+      const grid = h('div', { class: 'fingers' });
+      let done = false;
+      [0, 1, 2, 3, 5, 6, 7, 8].forEach((c) => grid.append(h('button', {
+        class: 'choice', type: 'button', onclick: (e) => {
+          if (done) return; done = true;
+          if (c === f) { ok++; e.currentTarget.classList.add('right'); fb.append(h('b', null, '正解'), '　', FINGERS[f], 'で打ちます。'); } else {
+            e.currentTarget.classList.add('wrong');
+            grid.children[[0, 1, 2, 3, 5, 6, 7, 8].indexOf(f)].classList.add('right');
+            fb.append(h('b', { class: 'no' }, '惜しい'), '　正解は', FINGERS[f], 'です。');
+          }
+          fb.hidden = false;
+          next.hidden = false;
+        },
+      }, FINGERS[c])));
+      const next = h('button', { class: 'btn primary', type: 'button', hidden: true, onclick: () => { i++; show(); } }, i + 1 < qs.length ? '次へ' : '結果を見る');
+      page.append(h('div', { class: 'card' }, h('p', { class: 'eyebrow' }, `${i + 1} / ${qs.length}`), h('p', { class: 'q' }, 'このキーは、どの指で打ちますか？'),
+        h('div', { class: 'bigkey' }, label), grid, fb, next));
+    };
+    show();
+  }
+
+  // ---- Excel の読みもの ----
+  function viewExcel() {
+    setHead('excel', 'Excelの読みもの', 'C2');
+    const page = h('section', { class: 'page' },
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, 'Sheet3'), h('h1', null, 'Excelの読みもの'),
+        h('p', { class: 'lead' }, 'ツールのExcel課題と同じ順番です。第0段階から順に読むと、そのまま課題につながります。')));
+    const list = h('div', { class: 'list' });
+    D.stages.forEach((s) => {
+      const ts = s.tasks.filter((t) => t.lesson.length);
+      const n = ts.filter((t) => store.read[t.id]).length;
+      list.append(h('a', { class: `row${ts.length && n === ts.length ? ' done' : ''}`, href: '#stage-' + s.id },
+        h('span', { class: 'no' }, s.id), h('span', { class: 't' }, h('b', null, s.title), h('span', null, s.desc)),
+        h('span', { class: 'mark' }, ts.length ? `${n}/${ts.length}` : 'テスト')));
+    });
+    page.append(list);
+    app.append(page);
+  }
+  function viewStage(id) {
+    const s = D.stages.find((x) => x.id === id);
+    if (!s) return viewExcel();
+    setHead('excel', `第${s.id}段階 ${s.title}`, `C${s.id + 3}`);
+    const page = h('section', { class: 'page' },
+      h('a', { class: 'note', href: '#excel' }, '← 段階の一覧'),
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, `第${s.id}段階`), h('h1', null, s.title), h('p', { class: 'lead' }, s.desc)));
+    const list = h('div', { class: 'list' });
+    s.tasks.forEach((t, i) => {
+      if (!t.lesson.length) {
+        list.append(h('div', { class: 'row' }, h('span', { class: 'no' }, 'テ'), h('span', { class: 't' }, h('b', null, t.title),
+          h('span', null, `パソコンで解く確認テストです${t.limit_min ? `（制限時間 ${t.limit_min}分）` : ''}。解説はありません。`)), h('span')));
+        return;
+      }
+      list.append(h('a', { class: `row${store.read[t.id] ? ' done' : ''}`, href: '#lesson-' + t.id.replace(/_/g, '-') },
+        h('span', { class: 'no' }, store.read[t.id] ? '✓' : i + 1), h('span', { class: 't' }, h('b', null, t.title), h('span', null, t.summary)), h('span')));
+    });
+    page.append(list);
+    app.append(page);
+  }
+  function sheetBlock(sh) {
+    const rows = sh.rows || [];
+    const cols = Math.max(...rows.map((r) => r.length), 1);
+    const table = h('table', { class: 'cells' });
+    const head = h('tr', null, h('th', null, ''));
+    for (let c = 0; c < cols; c++) head.append(h('th', null, colName(c)));
+    table.append(head);
+    rows.forEach((r, ri) => {
+      const tr = h('tr', null, h('th', null, ri + 1));
+      for (let c = 0; c < cols; c++) {
+        const v = r[c];
+        const isF = typeof v === 'string' && v.startsWith('=');
+        tr.append(h('td', { class: isF ? 'f' : (typeof v === 'number' ? 'num' : null) }, v == null ? '' : fmtNum(v)));
+      }
+      table.append(tr);
+    });
+    return h('div', { class: 'sheet' }, h('div', { class: 'grid-scroll' }, table), sh.note ? h('p', { class: 'note' }, sh.note) : null);
+  }
+  function viewLesson(id) {
+    let task = null; let stage = null;
+    for (const s of D.stages) for (const t of s.tasks) if (t.id === id) { task = t; stage = s; }
+    if (!task) return viewExcel();
+    setHead('excel', task.title, `C${stage.id + 3}`);
+    const ts = stage.tasks.filter((t) => t.lesson.length);
+    const idx = ts.indexOf(task);
+    const nxt = ts[idx + 1] || null;
+    const body = h('div', { class: 'lesson' });
+    task.lesson.forEach((b) => {
+      if (b.p) body.append(h('p', null, b.p));
+      else if (b.tip) body.append(h('p', { class: 'tip' }, b.tip));
+      else if (b.ex) body.append(h('div', { class: 'ex' }, h('code', null, b.ex[0]), h('span', null, b.ex[1])));
+      else if (b.sheet) body.append(sheetBlock(b.sheet));
+    });
+    const hints = h('div', { class: 'hint-box' }, h('h3', null, '課題のヒント'),
+      h('p', { class: 'note' }, 'パソコンで課題を解くときに出るヒントです。考えてから1つずつ開きます。'),
+      ...task.hints.map((t, i) => h('details', null, h('summary', null, ['考え方', '使う機能・関数', '数式や操作の形'][i] || `ヒント${i + 1}`), h('div', null, t))));
+    const mark = h('button', { class: 'btn primary', type: 'button', onclick: () => {
+      store.read[task.id] = Date.now(); store.last = task.id; save();
+      go(nxt ? 'lesson-' + nxt.id.replace(/_/g, '-') : 'stage-' + stage.id);
+    } }, nxt ? '読んだ・次へ' : '読んだ・一覧へ');
+    const page = h('section', { class: 'page' },
+      h('a', { class: 'note', href: '#stage-' + stage.id }, `← 第${stage.id}段階 ${stage.title}`),
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, `第${stage.id}段階・${idx + 1} / ${ts.length}${store.read[task.id] ? '・読みました' : ''}`),
+        h('h1', null, task.title), h('p', { class: 'lead' }, task.summary)),
+      body, task.hints.length ? hints : null,
+      h('div', { class: 'btns' }, mark));
+    app.append(page);
+  }
+
+  // ---- ショートカットの暗記カード ----
+  let keySet = 'k1';
+  try { keySet = sessionStorage.getItem(KEY + '-set') || 'k1'; } catch (e) { keySet = 'k1'; }
+  function caps(label) {
+    const wrap = h('div', { class: 'keycaps' });
+    label.split(' + ').forEach((k, i) => { if (i) wrap.append(h('span', { class: 'plus' }, '+')); wrap.append(h('span', { class: 'cap' }, k)); });
+    return wrap;
+  }
+  function viewKeys() {
+    setHead('keys', 'ショートカット', 'D2');
+    const page = h('section', { class: 'page' },
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, 'Sheet4'), h('h1', null, 'ショートカットの暗記カード'),
+        h('p', { class: 'lead' }, '操作の説明を見て、押すキーを思い浮かべてから「答えを見る」を押します。実際に押す練習は、パソコンのツールで行います。')));
+    const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'ショートカットのセット' });
+    D.sets.forEach((s) => {
+      const n = D.shortcuts.filter((c) => c.set === s.id).length;
+      const k = D.shortcuts.filter((c) => c.set === s.id && store.known[c.id]).length;
+      chips.append(h('button', { class: 'chip', type: 'button', 'aria-pressed': String(s.id === keySet), onclick: () => {
+        keySet = s.id; try { sessionStorage.setItem(KEY + '-set', keySet); } catch (e) { /* 無視 */ } route();
+      } }, `${s.title}（${k}/${n}）`));
+    });
+    page.append(chips);
+    const deck = shuffle(D.shortcuts.filter((c) => c.set === keySet && !store.known[c.id]))
+      .concat(shuffle(D.shortcuts.filter((c) => c.set === keySet && store.known[c.id])));
+    const area = h('div', { class: 'stack' });
+    page.append(area);
+    let i = 0;
+    const show = () => {
+      area.textContent = '';
+      const set = D.sets.find((s) => s.id === keySet);
+      const total = deck.length;
+      const k = deck.filter((c) => store.known[c.id]).length;
+      area.append(h('div', { class: 'meter', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': total, 'aria-valuenow': k }, h('i', { style: `width:${total ? (k / total) * 100 : 0}%` })));
+      if (i >= total) {
+        area.append(h('div', { class: 'card' }, h('h3', null, `「${set.title}」を1周しました`), h('p', null, `覚えた ${k} / ${total}`),
+          h('div', { class: 'btns' }, h('button', { class: 'btn primary', type: 'button', onclick: () => route() }, 'もう1周'))));
+        return;
+      }
+      const c = deck[i];
+      const back = h('div', { class: 'stack', hidden: true }, caps(c.label), c.note ? h('p', { class: 'note' }, c.note) : null,
+        h('div', { class: 'btns' },
+          h('button', { class: 'btn', type: 'button', onclick: () => { delete store.known[c.id]; save(); i++; show(); } }, 'まだ'),
+          h('button', { class: 'btn primary', type: 'button', onclick: () => { store.known[c.id] = Date.now(); save(); i++; show(); } }, '覚えた')));
+      const reveal = h('button', { class: 'btn primary', type: 'button', onclick: () => { back.hidden = false; reveal.hidden = true; } }, '答えを見る');
+      area.append(h('div', { class: 'card' }, h('p', { class: 'eyebrow' }, `${i + 1} / ${total}${store.known[c.id] ? '・覚えた' : ''}`),
+        h('p', { class: 'q' }, c.desc), reveal, back));
+    };
+    show();
+    app.append(page);
+  }
+
+  // ---- 4択クイズ ----
+  function viewQuiz() {
+    setHead('quiz', '基礎の4択クイズ', 'E2');
+    const page = h('section', { class: 'page' },
+      h('div', { class: 'stack' }, h('p', { class: 'eyebrow' }, 'Sheet5'), h('h1', null, '基礎の4択クイズ'),
+        h('p', { class: 'lead' }, '全分野からまぜると10問、分野を選ぶとその分野の全問が出ます。答えるたびに解説が出ます。')));
+    const list = h('div', { class: 'list' });
+    list.append(h('button', { class: 'row', type: 'button', onclick: () => runQuiz(null, page) },
+      h('span', { class: 'no' }, '∑'), h('span', { class: 't' }, h('b', null, '全分野からまぜて'), h('span', null, `${D.quiz.length}問から10問`)), h('span')));
+    D.topics.forEach((t, i) => {
+      const best = store.quiz[t];
+      const n = D.quiz.filter((q) => q.topic === t).length;
+      list.append(h('button', { class: `row${best === n ? ' done' : ''}`, type: 'button', onclick: () => runQuiz(t, page) },
+        h('span', { class: 'no' }, i + 1), h('span', { class: 't' }, h('b', null, t), h('span', null, `${n}問`)),
+        h('span', { class: 'mark' }, best != null ? `最高 ${best}/${n}` : '')));
+    });
+    page.append(list);
+    app.append(page);
+  }
+  function runQuiz(topic, page) {
+    const pool = topic ? D.quiz.filter((q) => q.topic === topic) : D.quiz;
+    const qs = shuffle(pool).slice(0, 10);
+    let i = 0; let ok = 0;
+    const show = () => {
+      page.textContent = '';
+      window.scrollTo(0, 0);
+      if (i >= qs.length) {
+        if (topic) { store.quiz[topic] = Math.max(store.quiz[topic] || 0, ok); save(); }
+        page.append(h('div', { class: 'card' }, h('p', { class: 'eyebrow' }, topic || '全分野'), h('div', { class: 'score' }, `${ok} / ${qs.length}`),
+          h('p', null, ok === qs.length ? '全問正解です。' : '間違えた問題の解説を、パソコンで課題を解く前にもう一度読みましょう。'),
+          h('div', { class: 'btns' }, h('button', { class: 'btn primary', type: 'button', onclick: () => runQuiz(topic, page) }, 'もう一度'),
+            h('button', { class: 'btn', type: 'button', onclick: () => route() }, '分野の一覧'))));
+        return;
+      }
+      const q = qs[i];
+      const order = shuffle([0, 1, 2, 3]);
+      const fb = h('div', { class: 'feedback', hidden: true });
+      const box = h('div', { class: 'choices' });
+      let done = false;
+      order.forEach((ci) => box.append(h('button', { class: 'choice', type: 'button', 'data-ci': ci, onclick: (e) => {
+        if (done) return; done = true;
+        if (ci === q.answer) { ok++; e.currentTarget.classList.add('right'); fb.append(h('b', null, '正解　')); } else {
+          e.currentTarget.classList.add('wrong');
+          box.querySelector(`[data-ci="${q.answer}"]`).classList.add('right');
+          fb.append(h('b', { class: 'no' }, '不正解　'));
+        }
+        fb.append(q.explain);
+        fb.hidden = false; nx.hidden = false;
+        nx.focus();
+      } }, q.choices[ci])));
+      const nx = h('button', { class: 'btn primary', type: 'button', hidden: true, onclick: () => { i++; show(); } }, i + 1 < qs.length ? '次へ' : '結果を見る');
+      page.append(h('div', { class: 'card' }, h('p', { class: 'eyebrow' }, `${q.topic}・${i + 1} / ${qs.length}`), h('p', { class: 'q' }, q.q), box, fb, nx));
+    };
+    show();
+  }
+
+  route();
+
+  // アプリ版（GitHub Pages で配信し、ホーム画面に追加したもの）だけ、オフラインでも開けるようにする
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* 登録できなくてもページは動く */ }));
+  }
+})();
+</script>
+</body>
+</html>
